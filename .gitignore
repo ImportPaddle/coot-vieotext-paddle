@@ -1,0 +1,55 @@
+# ---------- repo-specific
+/pd-coot/data/
+/pd-coot/experiments/
+/pd-coot/provided_models/
+/pd-coot/provided_experiments/
+
+/pytorch-coot/data/
+/pytorch-coot/experiments/
+/pytorch-coot/provided_models/
+/pytorch-coot/provided_experiments/
+# ---------- general
+
+# big files
+*.npz
+*.h5
+*.bin
+*.gz
+*.pkl
+*.pt
+*-ubyte
+
+# pycharm
+.idea/
+*/.idea/
+
+# temp files
+.directory
+nohup.out
+~$*.*
+.nfs*
+.DS_Store
+*.swp
+*.exe.stackdump
+.~lock.*
+
+# python
+__pycache__/
+.pytest_cache/
+.ipynb_checkpoints
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# testing
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
