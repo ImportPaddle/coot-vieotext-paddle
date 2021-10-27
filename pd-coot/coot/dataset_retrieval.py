@@ -112,9 +112,9 @@ class RetrievalDataset(Dataset):
         verbose: Print output (cannot use logger in multiprocessed torch Dataset class)
     """
 
-    def __init__(self, cfg: RetrievalDatasetConfig, path_data: Union[str, Path], *,
-                 verbose: bool = False):
+    def __init__(self, cfg: RetrievalDatasetConfig, path_data: Union[str, Path], *, verbose: bool = False):
         # store config
+        super().__init__()
         self.path_data = Path(path_data)
         self.cfg = cfg
         self.split = cfg.split
@@ -280,7 +280,7 @@ class RetrievalDataset(Dataset):
         vid_feat_len = vid_dict["num_frames_vid"]
         if vid_feat_len > self.cfg.max_frames:
             vid_feat_len = self.cfg.max_frames
-        vid_feat = paddle.Tensor(self.get_vid_feat_by_amount(key, vid_feat_len))
+        vid_feat = paddle.to_tensor(self.get_vid_feat_by_amount(key, vid_feat_len))
         assert vid_feat_len == int(vid_feat.shape[0])
 
         if self.cfg.frames_noise != 0:
@@ -296,7 +296,7 @@ class RetrievalDataset(Dataset):
             if c_num_frames > self.cfg.max_frames:
                 c_num_frames = self.cfg.max_frames
             c_frames = self.get_clip_frames_by_amount(key, i, c_num_frames)
-            c_frames = paddle.Tensor(c_frames)
+            c_frames = paddle.to_tensor(c_frames)
             if self.cfg.frames_noise != 0:
                 # add noise to frames if needed
                 clip_frames_noise = utils_paddle.get_truncnorm_tensor(c_frames.shape, std=self.cfg.frames_noise)
@@ -317,7 +317,7 @@ class RetrievalDataset(Dataset):
         # ---------- load text features ----------
         par_feat, sent_feat_len_list = self.text_feats[key]
         par_feat_len = int(par_feat.shape[0])
-        par_feat = paddle.Tensor(par_feat).float()
+        par_feat = paddle.to_tensor(par_feat, dtype=paddle.float32)
 
         # split paragraph features into sentences
         sent_feat_list = []
@@ -353,7 +353,7 @@ class RetrievalDataset(Dataset):
 
         # read video sequence lengths
         list_vid_feat_len = [d.vid_feat_len for d in data_batch]
-        vid_feat_len = paddle.Tensor(list_vid_feat_len).long()
+        vid_feat_len = paddle.to_tensor(list_vid_feat_len, dtype=paddle.int64)
         vid_feat_max_len = int(vid_feat_len.max().numpy())
 
         # put all video features into a batch, masking / padding as necessary
@@ -371,7 +371,7 @@ class RetrievalDataset(Dataset):
 
         # read paragraph sequence lengths
         list_par_feat_len = [d.par_feat_len for d in data_batch]
-        par_feat_len = paddle.Tensor(list_par_feat_len).long()
+        par_feat_len = paddle.to_tensor(list_par_feat_len, dtype=int64)
         par_feat_max_len = int(par_feat_len.max().numpy())
 
         # put all paragraph features into a batch, masking / padding as necessary
@@ -388,7 +388,7 @@ class RetrievalDataset(Dataset):
 
         # read number of clips per video into tensor
         list_clip_num = [d.clip_num for d in data_batch]
-        clip_num = paddle.Tensor(list_clip_num).long()
+        clip_num = paddle.to_tensor(list_clip_num, dtype=paddle.int64)
         total_clip_num = int(np.sum(list_clip_num))
 
         # read list of list of clip lengths (number of features for each clip in each video)
@@ -417,14 +417,14 @@ class RetrievalDataset(Dataset):
                 # increase clip counter
                 c_num += 1
         # convert stored lengths to tensor
-        clip_feat_len = paddle.Tensor(clip_feat_len_list).long()
+        clip_feat_len = paddle.to_tensor(clip_feat_len_list, dtype=paddle.int64)
 
         # ---------- collate sentence features ----------
         # sentences will be pieced together from the paragraph features
 
         # read number of sentences per paragraph into tensor
         list_sent_num = [d.sent_num for d in data_batch]
-        sent_num = paddle.Tensor(list_sent_num).long()
+        sent_num = paddle.to_tensor(list_sent_num, dtype=paddle.int64)
         total_sent_num = int(np.sum(list_sent_num))
 
         # read list of list of sentence lengths (number of features for each sentence in each paragraph)
@@ -455,7 +455,7 @@ class RetrievalDataset(Dataset):
                 s_num += 1
                 pointer += sent_cap_len_item
         # convert stored lengths to tensor
-        sent_feat_len = paddle.Tensor(sent_feat_len_list).long()
+        sent_feat_len = paddle.to_tensor(sent_feat_len_list, dtype=paddle.int64)
 
         ret = RetrievalDataBatchTuple(
             key, data_key, sentences, vid_feat, vid_feat_mask, vid_feat_len, par_feat, par_feat_mask, par_feat_len,

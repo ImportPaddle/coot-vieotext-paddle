@@ -379,7 +379,7 @@ class BaseTrainer:
         self.timer_train_start = timer()
         self.logger.info(f"Training from {self.state.current_epoch} to {self.cfg.train.num_epochs}")
         self.logger.info("Training Models on devices " + ", ".join([
-            f"{key}: {next(val.parameters()).device}" for key, val in self.model_mgr.model_dict.items()]))
+            f"{key}: {next(iter(val.parameters())).place}" for key, val in self.model_mgr.model_dict.items()]))
 
     def hook_post_train(self) -> None:
         """
