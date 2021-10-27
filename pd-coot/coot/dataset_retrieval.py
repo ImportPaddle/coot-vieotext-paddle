@@ -357,8 +357,8 @@ class RetrievalDataset(Dataset):
         vid_feat_max_len = int(vid_feat_len.max().numpy())
 
         # put all video features into a batch, masking / padding as necessary
-        vid_feat = paddle.zeros(batch_size, vid_feat_max_len, vid_feat_dim).float()
-        vid_feat_mask = paddle.ones(batch_size, vid_feat_max_len).bool()
+        vid_feat = paddle.zeros([batch_size, vid_feat_max_len, vid_feat_dim], dtype=paddle.float32)
+        vid_feat_mask = paddle.ones([batch_size, vid_feat_max_len], dtype=paddle.bool)
         for batch, (seq_len, item) in enumerate(zip(list_vid_feat_len, list_vid_feat)):
             vid_feat[batch, :seq_len] = item
             vid_feat_mask[batch, :seq_len] = 0
@@ -371,12 +371,12 @@ class RetrievalDataset(Dataset):
 
         # read paragraph sequence lengths
         list_par_feat_len = [d.par_feat_len for d in data_batch]
-        par_feat_len = paddle.to_tensor(list_par_feat_len, dtype=int64)
+        par_feat_len = paddle.to_tensor(list_par_feat_len, dtype=paddle.int64)
         par_feat_max_len = int(par_feat_len.max().numpy())
 
         # put all paragraph features into a batch, masking / padding as necessary
-        par_feat = paddle.zeros(batch_size, par_feat_max_len, par_feat_dim).float()
-        par_feat_mask = paddle.ones(batch_size, par_feat_max_len).bool()
+        par_feat = paddle.zeros([batch_size, par_feat_max_len, par_feat_dim], dtype=paddle.float32)
+        par_feat_mask = paddle.ones([batch_size, par_feat_max_len], dtype=paddle.bool)
         for batch, (seq_len, item) in enumerate(zip(list_par_feat_len, list_par_feat)):
             par_feat[batch, :seq_len, :] = item
             par_feat_mask[batch, :seq_len] = 0
@@ -398,8 +398,8 @@ class RetrievalDataset(Dataset):
         clip_feat_max_len = int(np.max([np.max(len_single) for len_single in list_clip_feat_len_list]))
 
         # begin collation: create flattened tensor to store all clips
-        clip_feat = paddle.zeros((total_clip_num, clip_feat_max_len, vid_feat_dim)).float()
-        clip_feat_mask = paddle.ones((total_clip_num, clip_feat_max_len)).bool()
+        clip_feat = paddle.zeros((total_clip_num, clip_feat_max_len, vid_feat_dim), dtype=paddle.float32)
+        clip_feat_mask = paddle.ones((total_clip_num, clip_feat_max_len), dtype=paddle.bool)
 
         # collate clips, create masks and store lengths of individual clips
         clip_feat_len_list = []
@@ -434,8 +434,8 @@ class RetrievalDataset(Dataset):
         sent_feat_max_len = int(np.max([np.max(len_single) for len_single in list_sent_feat_len_list]))
 
         # begin collation: create flattened tensor to store all sentences
-        sent_feat = paddle.zeros((total_sent_num, sent_feat_max_len, par_feat_dim)).float()
-        sent_feat_mask = paddle.ones((total_sent_num, sent_feat_max_len)).bool()
+        sent_feat = paddle.zeros((total_sent_num, sent_feat_max_len, par_feat_dim), dtype=paddle.float32)
+        sent_feat_mask = paddle.ones((total_sent_num, sent_feat_max_len), dtype=paddle.bool)
 
         # collate sentences, create masks and store lengths of individual sentences
         sent_feat_len_list = []
