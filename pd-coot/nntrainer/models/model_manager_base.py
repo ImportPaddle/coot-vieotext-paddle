@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import paddle
-from paddle import nn 
+from paddle import nn
 
 import nntrainer.trainer_configs
 
@@ -145,13 +145,14 @@ class BaseModelManager:
         # print(cfg.training.representation)
         for key, value in params_dict.items():
             decay_mult = 1.0
-            if self.cfg.optimizer.weight_decay_for_bias and 'bias' in key:
-                decay_mult = 0.0
-            params += [{
-                'params': value,
-                'decay_mult': decay_mult,
-                'lr_mult': 1.0
-            }]
+            # if self.cfg.optimizer.weight_decay_for_bias and 'bias' in key:
+            #     decay_mult = 0.0
+            # params += [{
+            #     'params': value,
+            #     'decay_mult': decay_mult,
+            #     'lr_mult': 1.0
+            # }]
+            params.append(value)
             param_names += [key]
             params_flat += [value]
 

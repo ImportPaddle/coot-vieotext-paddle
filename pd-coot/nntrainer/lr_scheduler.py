@@ -15,6 +15,7 @@ from __future__ import annotations
 import logging
 from typing import Dict, List, Optional, Tuple
 
+import paddle.optimizer.lr
 from paddle.optimizer import Optimizer
 
 from nntrainer import typext, utils
@@ -100,7 +101,7 @@ class SchedulerWarmupConst(typext.ConstantHolder):
 
 
 # ---------- Base Scheduler class ----------
-class LRScheduler:
+class LRScheduler(paddle.optimizer.lr.LRScheduler):
     """
     Base LR scheduler. Optimizer and this scheduler init must happen before checkpoint loading.
 
@@ -142,6 +143,7 @@ class LRScheduler:
 
         # initialize learning rates in the optimizer
         self.base_lr_list: List[float] = []
+
         # for group in optimizer.param_groups:
         #     assert "initial_lr" not in group, "Optimizer has already set initial_lr, is that an error?"
         #     group["initial_lr"] = group["lr"]
