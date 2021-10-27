@@ -1,4 +1,6 @@
 # ---------- repo-specific
+./data/
+./dataset
 /pd-coot/data/
 /pd-coot/experiments/
 /pd-coot/provided_models/
