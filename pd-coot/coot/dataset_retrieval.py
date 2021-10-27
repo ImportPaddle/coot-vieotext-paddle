@@ -371,7 +371,7 @@ class RetrievalDataset(Dataset):
 
         # read paragraph sequence lengths
         list_par_feat_len = [d.par_feat_len for d in data_batch]
-        par_feat_len = paddle.to_tensor(list_par_feat_len, dtype=int64)
+        par_feat_len = paddle.to_tensor(list_par_feat_len, dtype=paddle.int64)
         par_feat_max_len = int(par_feat_len.max().numpy())
 
         # put all paragraph features into a batch, masking / padding as necessary
