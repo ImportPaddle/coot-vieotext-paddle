@@ -135,6 +135,7 @@ class TransformerLegacy(nn.Module):
         # convert input with FC
         self.input_fc = None
         if cfg.use_input_fc:
+            print('hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh',feature_dim)
             self.input_fc = MLP(feature_dim, cfg.input_fc_config)
             input_dim = cfg.input_fc_config.output_dim
         else:
@@ -233,6 +234,7 @@ class TransformerLegacy(nn.Module):
 
         # convert input with FC
         if self.input_fc is not None:
+            print("'hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh',input fc",features.shape)
             features = self.input_fc(features)
             # print("input fc",features.shape)
             # (batch, seq, new_dim)

@@ -122,7 +122,7 @@ class CycleConsistencyLoss(nn.Layer):
         self.print_fn = print_fn
         self.verbose = verbose
         self.num_samples = num_samples
-        self.num_samples_tensor = (paddle.ones(1) * self.num_samples)
+        self.num_samples_tensor = (paddle.ones([1]) * self.num_samples)
         if self.use_cuda:
             self.num_samples_tensor = self.num_samples_tensor.cuda(
                 non_blocking=True)

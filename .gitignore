@@ -53,3 +53,4 @@ coverage.xml
 *.cover
 .hypothesis/
 
+/pd-coot/test.py

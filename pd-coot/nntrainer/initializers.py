@@ -25,15 +25,30 @@ def max(a: paddle.Tensor, axis=0, keepdim=True):
     return max_, index
 
 
-def gather(tmp, ind):
-    for i in range(len() - 1, -1, -1):
-        ret = concat([reshape(
+def gather(tmp: paddle.Tensor, ind: paddle.Tensor):
+    shape = tmp.shape
+    tmp = paddle.to_tensor(tmp)
+    ind = paddle.to_tensor(ind)
+    if len(shape) == 2:
+        b = shape[0]
+        return concat([reshape(paddle.gather(tmp[i, :], ind[i, :]), [1, -1])
+                       for i in range(b)], axis=0)
+    elif len(shape) == 3:
+        out = []
+        for i in range(tmp.shape[0]):
+            _ = paddle.index_sample(tmp[i], ind[i])
+            out.append(_)
+        return paddle.to_tensor(out)
+    elif len(shape) == 4:
+        b, c, d = shape[:3]
+        return concat([reshape(
             concat([reshape(
                 concat([reshape(paddle.gather(tmp[i, j, k, :], ind[i, j, k, :]), [1, -1])
                         for k in range(d)], axis=0), [1, d, -1])
                 for j in range(c)], axis=0), [1, c, d, -1])
             for i in range(b)], axis=0)
-    return ret
+    else:
+        pass
 
 
 # These no_grad_* functions are necessary as wrappers around the parts of these

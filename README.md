@@ -3,6 +3,7 @@
 
 # 1.安装环境
 Python 3.8
+Paddle稳定版本
 # 2.下载大文件(无法上传GitHub)
 [数据集百度网盘下载链接](https://pan.baidu.com/s/1raSjxWL3lyKzk5th0jfpyw)
 

@@ -236,7 +236,6 @@ class TransformerLegacy(nn.Layer):
         # convert input with FC
         if self.input_fc is not None:
             features = self.input_fc(features)
-            # print("input fc",features.shape)
             # (batch, seq, new_dim)
 
         # add CLS token from global or local encoder

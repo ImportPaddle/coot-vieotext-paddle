@@ -102,7 +102,7 @@ class BaseTrainer:
 
         # logs some infos
         self.logger.info(f"Running on cuda: {self.cfg.use_cuda}, multi-gpu: {self.cfg.use_multi_gpu}, "
-                         f"gpus found: {paddle.cuda.device_count()}, fp16 amp: {self.cfg.fp16_train}.")
+                         f"gpus found: {paddle.get_device()}, fp16 amp: {self.cfg.fp16_train}.")
         # cudnn.enabled = self.cfg.cudnn_enabled
         # cudnn.benchmark = self.cfg.cudnn_benchmark
         # cudnn.deterministic = self.cfg.cudnn_deterministic
