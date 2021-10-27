@@ -93,7 +93,7 @@ class RetrievalModelManager(models.BaseModelManager):
         Returns:
             Video embeddings tuple.
         """
-        with auto_cast(enabled=self.is_auto_cast_enabled()):
+        with auto_cast(enable=self.is_auto_cast_enabled()):
             # reference models for easier usage
             net_vid_local = self.model_dict[RetrievalNetworksConst.NET_VIDEO_LOCAL]
             net_vid_global = self.model_dict[RetrievalNetworksConst.NET_VIDEO_GLOBAL]
@@ -149,7 +149,7 @@ class RetrievalModelManager(models.BaseModelManager):
         Returns:
             Text embeddings tuple.
         """
-        with auto_cast(enabled=self.is_auto_cast_enabled()):
+        with auto_cast(enable=self.is_auto_cast_enabled()):
             # reference models for easier usage
             net_text_local = self.model_dict[RetrievalNetworksConst.NET_TEXT_LOCAL]
             net_text_global = self.model_dict[RetrievalNetworksConst.NET_TEXT_GLOBAL]

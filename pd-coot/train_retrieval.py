@@ -47,7 +47,7 @@ def main():
     # set seed
     if cfg.random_seed is not None:
         print(f"Set seed to {cfg.random_seed}")
-        set_seed(cfg.random_seed, set_deterministic=False)  # set deterministic via config if needed
+        set_seed(cfg.random_seed)  # set deterministic via config if needed
 
     # create dataset and dataloader
     if (cfg.dataset_train.preload_vid_feat or cfg.dataset_train.preload_text_feat or cfg.dataset_val.preload_vid_feat or
