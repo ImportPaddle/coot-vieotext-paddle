@@ -251,7 +251,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
             self.hook_pre_train_epoch()  # pre-epoch hook: set models to train, time book-keeping
 
             # ---------- Dataloader Iteration ----------
-            for step, batch in enumerate(train_loader):  # type: RetrievalDataBatchTuple
+            for step, batch in enumerate(train_loader()):  # type: RetrievalDataBatchTuple
                 if step == 0:
                     self.logger.info(f"First step data ids: {batch.data_key[:min(4, len(batch.data_key))]}...")
                 if self.check_cuda():
@@ -259,10 +259,10 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
 
                 self.hook_pre_step_timer()  # hook for step timing
 
-                self.optimizer.zero_grad()
+                self.optimizer.clear_grad()
 
                 # ---------- forward pass ----------
-                with auto_cast(enabled=self.cfg.fp16_train):
+                with auto_cast(enable=self.cfg.fp16_train):
                     visual_data = self.model_mgr.encode_visual(batch)
                     text_data = self.model_mgr.encode_text(batch)
                     if self.cfg.train.loss_func == LossesConst.CONTRASTIVE:
@@ -364,7 +364,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
             # ---------- forward pass ----------
             self.hook_pre_step_timer()  # hook for step timing
 
-            with auto_cast(enabled=self.cfg.fp16_val):
+            with auto_cast(enable=self.cfg.fp16_val):
                 visual_data = self.model_mgr.encode_visual(batch)
                 text_data = self.model_mgr.encode_text(batch)
                 if self.cfg.train.loss_func == LossesConst.CONTRASTIVE:

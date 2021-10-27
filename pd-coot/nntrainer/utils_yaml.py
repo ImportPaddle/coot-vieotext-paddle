@@ -125,6 +125,9 @@ def dump_yaml_config_file(filename: str, config_dict: Dict[str, Any]) -> None:
     Args:
         filename: Target filename.
         config_dict: Input dictionary.
+
+    Returns:
+        object: 
     """
 
     # convert dict to yaml string
