@@ -96,7 +96,9 @@ def get_truncnorm_tensor(shape: Tuple[int], *, mean: float = 0, std: float = 1, 
     tmp = normal_(paddle.empty(shape + [num_examples, ]))
     valid = (tmp < limit).logical_and(tmp > -limit)
     mx, ind = initializers.max(valid.astype('int'), -1, keepdim=True)
-    return paddle.gather(tmp, index=paddle.to_tensor(ind[0].flatten()), axis=len(tmp.shape)-1).squeeze(-1).mul_(std).add_(mean)
+    return paddle.add(
+        paddle.multiply(initializers.gather(tmp, ind).squeeze(-1), paddle.to_tensor([std], dtype='float32')),
+        paddle.to_tensor([mean], dtype='float32'))
 
 
 def fill_tensor_with_truncnorm(input_tensor: paddle.Tensor, *, mean: float = 0, std: float = 1,
@@ -113,7 +115,7 @@ def fill_tensor_with_truncnorm(input_tensor: paddle.Tensor, *, mean: float = 0, 
     # get truncnorm values
     tmp = get_truncnorm_tensor(input_tensor.shape, mean=mean, std=std, limit=limit)
     # fill input tensor
-    input_tensor[...] = tmp[...]
+    input_tensor.set_value(tmp)
 
 
 # ---------- Profiling ----------

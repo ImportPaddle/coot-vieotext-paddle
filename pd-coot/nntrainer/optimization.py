@@ -6,7 +6,7 @@ import math
 from typing import Dict, Iterable
 
 import paddle
-from paddle.optimizer import Adam
+from paddle.optimizer import Adam, AdamW
 from paddle.optimizer import Optimizer
 
 from nntrainer import typext
@@ -31,7 +31,7 @@ class OptimizerConfig(typext.ConfigClass):
     def __init__(self, config: Dict) -> None:
         self.name: str = config.pop("name")
         self.lr: float = config.pop("lr")
-        self.weight_decay: float = config.pop("weight_decay")
+        self.weight_decay: paddle.Tensor = config.pop("weight_decay")
         self.weight_decay_for_bias: bool = config.pop("weight_decay_for_bias")
         self.momentum: float = config.pop("momentum")
         self.sgd_nesterov: bool = config.pop("sgd_nesterov")
@@ -54,12 +54,30 @@ def make_optimizer(cfg: OptimizerConfig, params: Iterable[paddle.Tensor]) -> Opt
         Normalization function class.
     """
     if cfg.name == OptimizerConst.ADAM:
-        optimizer: Optimizer = Adam(params, lr=cfg.lr, betas=(cfg.momentum, cfg.adam_beta2), eps=cfg.adam_eps,
-                                    weight_decay=cfg.weight_decay, amsgrad=cfg.adam_amsgrad)
+        optimizer: Optimizer = Adam(parameters=params, learning_rate=cfg.lr, beta1=cfg.momentum, beta2=cfg.adam_beta2, epsilon=cfg.adam_eps,
+                                    weight_decay=cfg.weight_decay)
+            # , amsgrad=cfg.adam_amsgrad
     elif cfg.name == OptimizerConst.RADAM:
-        optimizer = RAdam(params, lr=cfg.lr, betas=(cfg.momentum, cfg.adam_beta2), eps=cfg.adam_eps,
-                          weight_decay=cfg.weight_decay,
-                          degenerated_to_sgd=cfg.radam_degentosgd)
+        params = [paddle.to_tensor(param.values()) for param in params]
+        optimizer = AdamW(parameters=params, learning_rate=cfg.lr, beta1=cfg.momentum, beta2=cfg.adam_beta2, epsilon=cfg.adam_eps,
+                          weight_decay=paddle.to_tensor(cfg.weight_decay))
+        """
+         def __init__(self,
+                 learning_rate=0.001,
+                 beta1=0.9,
+                 beta2=0.999,
+                 epsilon=1e-8,
+                 parameters=None,
+                 weight_decay=0.01,
+                 apply_decay_param_fun=None,
+                 grad_clip=None,
+                 lazy_mode=False,
+                 multi_precision=False,
+                 name=None):
+        """
+        # optimizer = RAdam(params=params, lr=cfg.lr, betas=(cfg.momentum, cfg.adam_beta2), eps=cfg.adam_eps,
+        #                   weight_decay=cfg.weight_decay,
+        #                   degenerated_to_sgd=cfg.radam_degentosgd)
     else:
         raise NotImplementedError(f"Unknown optimizer {cfg.name}")
 
@@ -102,9 +120,10 @@ class RAdam(Optimizer):
                         param['betas'][0] != betas[0] or param['betas'][1] !=
                         betas[1]):
                     param['buffer'] = [[None, None, None] for _ in range(10)]
-        defaults = dict(lr=lr, betas=betas, eps=eps, weight_decay=weight_decay,
-                        buffer=[[None, None, None] for _ in range(10)])
-        super().__init__(params, defaults)
+        defaults = dict(learning_rate=lr, betas=betas, weight_decay=weight_decay)
+        # defaults = dict(learning_rate=lr, betas=betas, eps=eps, weight_decay=weight_decay,
+        #                 buffer=[[None, None, None] for _ in range(10)])
+        super().__init__(parameters=params, **defaults)
 
     def step(self, closure=None):
         loss = None
