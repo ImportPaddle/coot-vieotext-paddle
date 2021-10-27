@@ -142,10 +142,10 @@ class LRScheduler:
 
         # initialize learning rates in the optimizer
         self.base_lr_list: List[float] = []
-        for group in optimizer.param_groups:
-            assert "initial_lr" not in group, "Optimizer has already set initial_lr, is that an error?"
-            group["initial_lr"] = group["lr"]
-            self.base_lr_list.append(group["initial_lr"])
+        # for group in optimizer.param_groups:
+        #     assert "initial_lr" not in group, "Optimizer has already set initial_lr, is that an error?"
+        #     group["initial_lr"] = group["lr"]
+        self.base_lr_list.append(optimizer.get_lr())
 
         # init current and old lr list
         self.current_lr_list = self.base_lr_list
@@ -286,8 +286,11 @@ class LRScheduler:
         if not needs_update:
             return
         self.logger.debug(f"{self.get_current_step_for_print()} LR updated to {self.current_lr}")
-        for param_group, lr in zip(self.optimizer.param_groups, self.current_lr_list):
-            param_group["lr"] = lr
+
+        # update lr for all parameters
+        self.optimizer.set_lr(self.current_lr)
+        # for param_group, lr in zip(self.optimizer.param_groups, self.current_lr_list):
+        #     param_group["lr"] = lr
 
     def _is_warmup(self) -> bool:
         """

@@ -109,7 +109,8 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         if not self.is_test:
             # create optimizer
             params, _param_names, _params_flat = self.model_mgr.get_all_params()
-            self.optimizer = optimization.make_optimizer(self.cfg.optimizer, params)
+            # self.optimizer = optimization.make_optimizer(self.cfg.optimizer, params)
+            self.optimizer = optimization.make_optimizer(self.cfg.optimizer, _params_flat)
 
             # create lr scheduler
             self.lr_scheduler = lr_scheduler.make_lr_scheduler(

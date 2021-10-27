@@ -53,12 +53,14 @@ def make_optimizer(cfg: OptimizerConfig, params: Iterable[paddle.Tensor]) -> Opt
     Returns:
         Normalization function class.
     """
+    # print('params:', params, 'params len:', len(params))
+
     if cfg.name == OptimizerConst.ADAM:
         optimizer: Optimizer = Adam(parameters=params, learning_rate=cfg.lr, beta1=cfg.momentum, beta2=cfg.adam_beta2, epsilon=cfg.adam_eps,
                                     weight_decay=cfg.weight_decay)
             # , amsgrad=cfg.adam_amsgrad
     elif cfg.name == OptimizerConst.RADAM:
-        params = [paddle.to_tensor(param.values()) for param in params]
+        # params = [param_dict.values() for param_dict in params]
         optimizer = AdamW(parameters=params, learning_rate=cfg.lr, beta1=cfg.momentum, beta2=cfg.adam_beta2, epsilon=cfg.adam_eps,
                           weight_decay=paddle.to_tensor(cfg.weight_decay))
         """
@@ -84,10 +86,9 @@ def make_optimizer(cfg: OptimizerConfig, params: Iterable[paddle.Tensor]) -> Opt
     # apply special lr / weight decay if given by the model.
     lr = cfg.lr
     wd = cfg.weight_decay
-    for param_group in optimizer.param_groups:
-        param_group['lr'] = lr * param_group['lr_mult']
-        param_group['weight_decay'] =\
-            wd * param_group['decay_mult']
+    # for param_group in optimizer.param_groups:
+    #     param_group['lr'] = lr * param_group['lr_mult']
+    #     param_group['weight_decay'] = wd * param_group['decay_mult']
 
     return optimizer
 
