@@ -328,10 +328,14 @@ class RetrievalDataset(Dataset):
             sent_feat_list.append(sent_feat)
             pointer += sent_cap_len
 
+        # return 1
         # return single datapoint
-        return RetrievalDataPointTuple(
-            key, data_key, sentences, vid_feat, vid_feat_len, par_feat, par_feat_len, clip_num,
-            clip_feat_list, clip_feat_len_list, sent_num, sent_feat_list, sent_feat_len_list)
+        return key, data_key,sentences, vid_feat, vid_feat_len, par_feat, par_feat_len, clip_num,\
+            clip_feat_list, clip_feat_len_list, sent_num, sent_feat_list, sent_feat_len_list
+        # return RetrievalDataPointTuple(
+        #             key, data_key,
+        #             sentences, vid_feat, vid_feat_len, par_feat, par_feat_len, clip_num,
+        #             clip_feat_list, clip_feat_len_list, sent_num, sent_feat_list, sent_feat_len_list)
 
     def collate_fn(self, data_batch: List[RetrievalDataPointTuple]):
         """
@@ -502,7 +506,7 @@ def run_retrieval_dataset_test(train_set: RetrievalDataset, train_loader: DataLo
 
     # print one batch of data and exit
     for i, batch in enumerate(train_loader):  # type: RetrievalDataBatchTuple
-        print("batch number:", i)
+        print("batch numberhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh:", i)
         for field, value in batch.dict().items():
             print(f"{field}:", end=" ")
             if isinstance(value, paddle.Tensor):
