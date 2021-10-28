@@ -129,7 +129,7 @@ class RetrievalModelManager(models.BaseModelManager):
                 clip_emb_lens = clip_emb_lens.cuda()
             pointer = 0
             for batch_num, clip_len in enumerate(batch.clip_num):
-                clip_emb_reshape[batch_num, :clip_len, :] = clip_emb[pointer:pointer + clip_len, :]
+                clip_emb_reshape[batch_num, :int(clip_len), :] = clip_emb[pointer:int(pointer + clip_len), :]
                 clip_emb_mask[batch_num, :clip_len] = 0
                 clip_emb_lens[batch_num] = clip_len
                 pointer += clip_len
@@ -185,9 +185,9 @@ class RetrievalModelManager(models.BaseModelManager):
                 sent_emb_lens = sent_emb_lens.cuda()
             pointer = 0
             for batch_num, sent_len in enumerate(batch.sent_num):
-                sent_emb_reshape[batch_num, :sent_len, :] =\
-                    sent_emb[pointer:pointer + sent_len, :]
-                sent_emb_mask[batch_num, :sent_len] = 0
+                sent_emb_reshape[batch_num, :int(sent_len), :] =\
+                    sent_emb[pointer:pointer + int(sent_len), :]
+                sent_emb_mask[batch_num, :int(sent_len)] = 0
                 sent_emb_lens[batch_num] = sent_len
                 pointer += sent_len
 

@@ -370,7 +370,7 @@ class TransformerEncoder(nn.Layer):
         # the query will never attend to masked keys, and useless masked query
         # parts can be discarded on the output pool
 
-        mask_expanded = mask.unsqueeze(1).expand(batch_size, query_len, key_len)
+        mask_expanded = mask.unsqueeze(1).expand([batch_size, query_len, key_len])
         # print(mask_expanded.shape)
         # (batch_size, query_len, key_len) dtype bool
 
@@ -521,7 +521,9 @@ class MultiHeadAttention(nn.Layer):
             mask_expanded_per_head = mask_expanded.unsqueeze(1).expand_as(attention_weights)
             # print("mask_expanded_per_head", mask_expanded_per_head.shape)
             # shape (batch_size, num_heads, query_len, key_len)
-            attention_weights = paddle.where(mask_expanded_per_head == 1, -nntrainer.typext.INF, attention_weights)
+            attention_weights = paddle.where(mask_expanded_per_head == 1,
+                                             paddle.to_tensor(-nntrainer.typext.INF, dtype='float32'),
+                                             attention_weights)
             # attention_weights = attention_weights.masked_fill(mask_expanded_per_head, -nntrainer.typext.INF)
             # print("attention_weights", attention_weights.shape)
             # shape (batch_size, num_heads, query_len, query_len)
@@ -538,7 +540,7 @@ class MultiHeadAttention(nn.Layer):
         context_sequence = context_heads.transpose([0, 2, 1, 3])
         # (batch_size, query_len, num_heads, d_head)
 
-        context = context_sequence.reshape(batch_size, query_len, d_model)
+        context = context_sequence.reshape([batch_size, query_len, d_model])
         # (batch_size, query_len, d_model)
         final_output = self.final_projection(context)
         # print("final_output", final_output.shape)

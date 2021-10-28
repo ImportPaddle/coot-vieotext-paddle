@@ -188,7 +188,7 @@ class GenPool(nn.Layer):
 
         # set pre-softmax activations for masked sequence elements to -inf
         # mask shape (batch, seq_len)
-        b1 = paddle.where(mask.unsqueeze(1).unsqueeze(-1) == True, -INF, b1)
+        b1 = paddle.where(mask.unsqueeze(1).unsqueeze(-1) == True, paddle.to_tensor(-INF, dtype='float32'), b1)
         # b1.masked_fill_(mask.unsqueeze(1).unsqueeze(-1), -INF)
 
         # now softmax individually per head over the sequence
@@ -287,5 +287,5 @@ class TemporalFirstPool(nn.Layer):
         result2 = features[:, 0, :]
         if self.half_pool:
             _, feat_dim = result2.shape
-            result2 = result2.reshape(-1, 2, feat_dim // 2).mean(axis=1)
+            result2 = result2.reshape([-1, 2, feat_dim // 2]).mean(axis=1)
         return result2
