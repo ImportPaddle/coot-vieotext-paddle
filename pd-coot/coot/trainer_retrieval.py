@@ -252,6 +252,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
 
             # ---------- Dataloader Iteration ----------
             for step, batch in enumerate(train_loader):  # type: RetrievalDataBatchTuple
+                batch = RetrievalDataBatchTuple(*batch)
                 if step == 0:
                     self.logger.info(f"First step data ids: {batch.data_key[:min(4, len(batch.data_key))]}...")
                 if self.check_cuda():
@@ -351,6 +352,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         num_steps = 0
         pbar = tqdm(total=len(data_loader), desc=f"Validate epoch {self.state.current_epoch}")
         for _step, batch in enumerate(data_loader):  # type: RetrievalDataBatchTuple
+            batch = RetrievalDataBatchTuple(*batch)
             # move data to cuda
             if self.check_cuda():
                 batch.to_cuda(non_blocking=self.cfg.cuda_non_blocking)
