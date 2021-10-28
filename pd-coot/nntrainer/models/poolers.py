@@ -199,8 +199,7 @@ class GenPool(nn.Layer):
         smweights = self.dropout3(smweights)
 
         # multiply input features with softmax weights for all heads
-        smweights = smweights.transpose(1, 2).reshape(
-            -1, seq_len, input_dim)
+        smweights = smweights.transpose([0, 2, 1, 3]).reshape([-1, seq_len, input_dim])
         # shape (batch, seq_len, input_dim)
 
         # use the attention weights to pool over the sequence and done
