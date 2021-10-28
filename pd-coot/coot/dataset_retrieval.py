@@ -19,7 +19,7 @@ New updated text processing with capitalization, dots, cased models that perform
 
 import json
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Any
 
 import numpy as np
 import paddle
@@ -259,7 +259,8 @@ class RetrievalDataset(Dataset):
         """
         return len(self.keys)
 
-    def __getitem__(self, item: int) -> RetrievalDataPointTuple:
+    def __getitem__(self, item: int) -> Tuple[
+        Any, Any, str, Any, Union[int, Any], Any, int, int, list, list, int, list, List[int]]:
         """
         Return a single datapoint.
 
@@ -330,8 +331,8 @@ class RetrievalDataset(Dataset):
 
         # return 1
         # return single datapoint
-        return key, data_key,sentences, vid_feat, vid_feat_len, par_feat, par_feat_len, clip_num,\
-            clip_feat_list, clip_feat_len_list, sent_num, sent_feat_list, sent_feat_len_list
+        return key, data_key, sentences, vid_feat, vid_feat_len, par_feat, par_feat_len, clip_num, \
+               clip_feat_list, clip_feat_len_list, sent_num, sent_feat_list, sent_feat_len_list
         # return RetrievalDataPointTuple(
         #             key, data_key,
         #             sentences, vid_feat, vid_feat_len, par_feat, par_feat_len, clip_num,
@@ -343,6 +344,7 @@ class RetrievalDataset(Dataset):
 
         Returns:
         """
+        data_batch = [RetrievalDataPointTuple(*data) for data in data_batch]
         batch_size = len(data_batch)
         key: List[str] = [d.key for d in data_batch]
         data_key: List[str] = [d.data_key for d in data_batch]
@@ -462,10 +464,9 @@ class RetrievalDataset(Dataset):
         # convert stored lengths to tensor
         sent_feat_len = paddle.to_tensor(sent_feat_len_list, dtype=paddle.int64)
 
-        ret = RetrievalDataBatchTuple(
-            key, data_key, sentences, vid_feat, vid_feat_mask, vid_feat_len, par_feat, par_feat_mask, par_feat_len,
-            clip_num, clip_feat, clip_feat_mask, clip_feat_len, sent_num, sent_feat, sent_feat_mask, sent_feat_len)
-        return ret
+        return    key, data_key, sentences, vid_feat, vid_feat_mask, vid_feat_len, par_feat, par_feat_mask, par_feat_len,\
+            clip_num, clip_feat, clip_feat_mask, clip_feat_len, sent_num, sent_feat, sent_feat_mask, sent_feat_len
+        # return ret
 
 
 def create_retrieval_datasets_and_loaders(cfg: coot.configs_retrieval.RetrievalConfig, path_data: Union[str, Path]) -> (
@@ -506,7 +507,8 @@ def run_retrieval_dataset_test(train_set: RetrievalDataset, train_loader: DataLo
 
     # print one batch of data and exit
     for i, batch in enumerate(train_loader):  # type: RetrievalDataBatchTuple
-        print("batch numberhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh:", i)
+        batch = RetrievalDataBatchTuple(*batch)
+        print("batch number:", i)
         for field, value in batch.dict().items():
             print(f"{field}:", end=" ")
             if isinstance(value, paddle.Tensor):
