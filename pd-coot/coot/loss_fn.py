@@ -5,7 +5,8 @@ Loss functions.
 from typing import Callable, Dict
 
 import paddle
-from paddle import nn 
+from paddle import nn
+from paddle.fluid.layers.nn import pad 
 
 from nntrainer import typext
 from nntrainer.typext import INF
@@ -84,11 +85,13 @@ class ContrastiveLoss(nn.Layer):
         cost_im = (self.margin + scores - d2).clamp(min=0)
 
         # clear diagonals, where there is just the margin left
-        mask: paddle.Tensor = paddle.eye(shape=scores.shape[0], dtype=paddle.bool)
+        mask: paddle.Tensor = paddle.eye(shape=scores.shape[0]).astype(paddle.bool)
         if self.use_cuda:
-            mask = mask.cuda(non_blocking=True)
-        cost_s = cost_s.masked_fill_(mask, 0)
-        cost_im = cost_im.masked_fill_(mask, 0)
+            mask = mask.cuda()
+        cost_s = paddle.where(mask == True, paddle.to_tensor(0.), cost_s)
+        cost_im = paddle.where(mask == True, paddle.to_tensor(0.), cost_im)
+        # cost_s = cost_s.masked_fill_(mask, 0)
+        # cost_im = cost_im.masked_fill_(mask, 0)
 
         # keep the maximum violating negative for each query
         if self.max_violation:
@@ -258,7 +261,8 @@ class CycleConsistencyLoss(nn.Layer):
         # d holds distances (batch_size, source_num, target_num)
 
         # set masked distances to (almost) negative infinity
-        distance.masked_fill_(~total_mask, self.proximity_mask_val)
+        distance = paddle.where(~total_mask == 1, paddle.to_tensor(self.proximity_mask_val), distance)
+        # distance.masked_fill_(~total_mask, self.proximity_mask_val)
         # shape (batch_size, source_max_len, target_max_len)
         # masked values are set to very high negative number for softmax
 
@@ -363,7 +367,8 @@ class CycleConsistencyLoss(nn.Layer):
         # shape (batch, seq_len, seq_len)
 
         # mask values that exceed the sequence length
-        distance.masked_fill_(~emb_mask_rep, 0)
+        distance = paddle.where(~emb_mask_rep == 1, paddle.to_tensor(0), distance)
+        # distance.masked_fill_(~emb_mask_rep, 0)
 
         # diagonal of last 2 dims of this distance tensor contains distance
         # from soft index i to hard index i, this is the loss distance
@@ -376,7 +381,8 @@ class CycleConsistencyLoss(nn.Layer):
 
         # calculate regularizer loss on the variance and apply mask
         var_reg_per_seq = self.lambda_index_gauss * .5 * paddle.log(self.var_log_eps + variance)
-        var_reg_per_seq.masked_fill_(emb_mask, 0)
+        distance = paddle.where(emb_mask == 1, paddle.to_tensor(0), distance)
+        # var_reg_per_seq.masked_fill_(emb_mask, 0)
         # shape (batch, seq_len)
 
         # calculate loss (no need to apply mask since distance is masked to 0)

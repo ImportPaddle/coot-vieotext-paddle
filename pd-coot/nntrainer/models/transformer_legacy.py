@@ -521,7 +521,8 @@ class MultiHeadAttention(nn.Layer):
             mask_expanded_per_head = mask_expanded.unsqueeze(1).expand_as(attention_weights)
             # print("mask_expanded_per_head", mask_expanded_per_head.shape)
             # shape (batch_size, num_heads, query_len, key_len)
-            attention_weights = attention_weights.masked_fill(mask_expanded_per_head, -nntrainer.typext.INF)
+            attention_weights = paddle.where(mask_expanded_per_head == 1, -nntrainer.typext.INF, attention_weights)
+            # attention_weights = attention_weights.masked_fill(mask_expanded_per_head, -nntrainer.typext.INF)
             # print("attention_weights", attention_weights.shape)
             # shape (batch_size, num_heads, query_len, query_len)
 

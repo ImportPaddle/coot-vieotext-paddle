@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import paddle
 from paddle import nn
+from paddle.fluid.layers.nn import pad
 
 from nntrainer import typext
 from nntrainer.models.activations import ActivationConfig, make_activation_module
@@ -187,7 +188,8 @@ class GenPool(nn.Layer):
 
         # set pre-softmax activations for masked sequence elements to -inf
         # mask shape (batch, seq_len)
-        b1.masked_fill_(mask.unsqueeze(1).unsqueeze(-1), -INF)
+        b1 = paddle.where(mask.unsqueeze(1).unsqueeze(-1) == True, -INF, b1)
+        # b1.masked_fill_(mask.unsqueeze(1).unsqueeze(-1), -INF)
 
         # now softmax individually per head over the sequence
         smweights = self.softmax(b1 / self.softmax_temp)
@@ -216,7 +218,8 @@ class TemporalMaxPool(nn.Layer):
         mask_expanded = mask.unsqueeze(-1)
         value = -INF
         try:
-            feat_fill = features.masked_fill(mask_expanded, value)
+            feat_fill = paddle.where(mask_expanded == 1, value, features)
+            # feat_fill = features.masked_fill(mask_expanded, value)
         except RuntimeError as e:
             print(
                 f"input features {features.shape} mask {mask.shape} "
@@ -248,7 +251,8 @@ class TemporalAvgPoolFixed(nn.Layer):
         # lengths (batch)
 
         # MASK features
-        f2 = features.masked_fill(mask.unsqueeze(-1), 0)
+        f2 = paddle.where(mask.unsqueeze(-1) == 1, paddle.to_tensor(0), features)
+        # f2 = features.masked_fill(mask.unsqueeze(-1), 0)
         len_div = lengths.unsqueeze(-1).astype(paddle.float32)
         result2 = paddle.sum(f2, axis=1) / len_div
         # output shape (batch, feat_dim * num_dirs)
