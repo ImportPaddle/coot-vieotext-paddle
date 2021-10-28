@@ -256,8 +256,8 @@ class BaseTrainer:
         Args:
             opt_state: Dictionary of optimizer and scheduler state dict.
         """
-        self.optimizer.load_state_dict(opt_state["optimizer"])
-        self.lr_scheduler.load_state_dict(opt_state["lr_scheduler"])
+        self.optimizer.set_state_dict(opt_state["optimizer"])
+        self.lr_scheduler.set_state_dict(opt_state["lr_scheduler"])
 
     # ---------- Misc. public methods ----------
     def check_cuda(self):
@@ -464,7 +464,7 @@ class BaseTrainer:
         for field in fields:
             time_value = self.metrics.meters[field].avg
             time_name_short = str(field).split("/")[-1].split("_")[-1]
-            time_str_list += [time_name_short, f"{time_value * 1000:.2f}ms", f"{time_value / time_total:.1%}"]
+            time_str_list += [time_name_short, f"{time_value * 1000:.2f}ms", f"{time_value / time_total if time_total else .1:.1%}"]
         self.logger.info(" ".join(time_str_list))
 
         # feed step-based metrics to tensorboard and collector

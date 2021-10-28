@@ -496,5 +496,5 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         Args:
             opt_state: Dictionary of optimizer and scheduler state dict.
         """
-        self.optimizer.load_state_dict(opt_state["optimizer"])
-        self.lr_scheduler.load_state_dict(opt_state["lr_scheduler"])
+        self.optimizer.set_state_dict(opt_state["optimizer"])
+        self.lr_scheduler.set_state_dict(opt_state["lr_scheduler"])

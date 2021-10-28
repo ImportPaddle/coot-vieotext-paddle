@@ -107,18 +107,18 @@ class BaseModelManager:
                     }.items():
                         param_name = param_name.replace(replace_from, replace_to)
                     new_state[param_name] = param
-                self.model_dict[model_name].load_state_dict(new_state)
+                self.model_dict[model_name].set_state_dict(new_state)
             return
         # backwards compatibility to recurrent_transformer (original MART repository style checkpoints)
         if sorted(list(state.keys())) == ["epoch", "model", "model_cfg", "opt"]:
             state_dict = state["model"]
             print(f"Backward compatible loading for recurrent_transformer epoch {state['epoch']} with "
                   f"{sum([np.product(param.shape) for param in state_dict.values()])} parameters")
-            self.model_dict['model'].load_state_dict(state_dict)
+            self.model_dict['model'].set_state_dict(state_dict)
             return
         # newest version of loading. keys in the state correspond to keys in the model_dict.
         for model_name, state_dict in state.items():
-            self.model_dict[model_name].load_state_dict(state_dict)
+            self.model_dict[model_name].set_state_dict(state_dict)
             # sep = "\n"
             # print(f"Loaded model: {model_name}params:\n{sep.join(name for name in state_dict.keys())}")
 

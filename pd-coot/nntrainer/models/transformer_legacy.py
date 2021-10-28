@@ -448,7 +448,8 @@ class Sublayer(nn.Layer):
             return self.layer_normalization(x)
         # sublayer returns other information, too
         x = sublayer_return[0] + x
-        return self.layer_normalization(x), *sublayer_return[1:]
+        return self.layer_normalization(x), [x for x in sublayer_return[1:]]
+        # return self.layer_normalization(x), *sublayer_return[1:]
 
 
 class MultiHeadAttention(nn.Layer):

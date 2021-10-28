@@ -367,8 +367,8 @@ class MetricsWriter:
         """
         if not no_tensorboard:
             # write to tensorboard
-            self.tensorb_writer.add_scalar(metric_name, metric_value, global_step=global_step)
-
+            # self.tensorb_writer.add_scalar(metric_name, metric_value, global_step=global_step)
+            pass
         # write to metrics logger
         if per_step:
             self.storage_step[metric_name].append((global_step, metric_value))

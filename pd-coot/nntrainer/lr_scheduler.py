@@ -196,7 +196,7 @@ class LRScheduler(paddle.optimizer.lr.LRScheduler):
         """
         return {key: value for key, value in self.__dict__.items() if key != "optimizer"}
 
-    def load_state_dict(self, state_dict):
+    def set_state_dict(self, state_dict):
         """
         Loads the schedulers state.
 
