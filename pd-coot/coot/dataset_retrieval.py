@@ -23,6 +23,7 @@ from typing import List, Tuple, Union
 
 import numpy as np
 import paddle
+from paddle.fluid.dataloader import IterableDataset
 from paddle.io import Dataset, DataLoader
 
 import coot.configs_retrieval

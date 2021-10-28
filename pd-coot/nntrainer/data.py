@@ -32,6 +32,9 @@ def create_loader(dataset: Dataset, cfg: trainer_configs.BaseDatasetConfig, batc
 
     Returns:
     """
+    # return DataLoader(
+    #     dataset, batch_size=batch_size, num_workers=cfg.num_workers,
+    #     drop_last=cfg.drop_last, collate_fn=collate_fn)  # type: ignore
     return DataLoader(
-        dataset, batch_size, shuffle=cfg.shuffle, num_workers=cfg.num_workers,
+        dataset, batch_size=batch_size, shuffle=cfg.shuffle, num_workers=cfg.num_workers,
         drop_last=cfg.drop_last, collate_fn=collate_fn)  # type: ignore

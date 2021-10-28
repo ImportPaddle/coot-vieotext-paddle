@@ -74,7 +74,7 @@ def main():
 
         # create trainer
         trainer = Trainer(
-            cfg, model_mgr, exp_group, exp_name, run_name, len(train_loader), log_dir=args.log_dir,
+            cfg, model_mgr, exp_group, exp_name, run_name, len(train_loader()), log_dir=args.log_dir,
             log_level=args.log_level, logger=None, print_graph=args.print_graph, reset=args.reset, load_best=load_best,
             load_epoch=args.load_epoch, load_model=args.load_model, inference_only=args.validate)
 

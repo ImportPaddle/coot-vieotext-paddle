@@ -209,7 +209,7 @@ class TypedNamedTuple(BaseModel):
         Returns:
             Constant keys.
         """
-        return self.dict().keys()
+        return list(self.dict().keys())
 
     def items(self) -> List[str]:
         """
@@ -218,7 +218,7 @@ class TypedNamedTuple(BaseModel):
         Returns:
             Constant keys.
         """
-        return self.dict().items()
+        return list(self.dict().items())
 
     def values(self) -> List[Any]:
         """
@@ -227,7 +227,7 @@ class TypedNamedTuple(BaseModel):
         Returns:
             Constant values.
         """
-        return self.dict().values()
+        return list(self.dict().values())
 
     def validate_shapes(self):
         """
