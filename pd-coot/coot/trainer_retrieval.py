@@ -386,9 +386,9 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
                 emb = all_data.get(key)
                 # collect embeddings into list, on CPU otherwise the gpu runs OOM
                 if data_collector.get(key) is None:
-                    data_collector[key] = [emb.data.cpu()]
+                    data_collector[key] = [emb.cpu()]
                 else:
-                    data_collector[key] += [emb.data.cpu()]
+                    data_collector[key] += [emb.cpu()]
             pbar.update()
         pbar.close()
 
@@ -397,7 +397,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         # postprocess collected embeddings
         data_collector_norm = {}
         for key in collect_keys:
-            data_collector[key] = paddle.concat(data_collector[key], axis=0).float()
+            data_collector[key] = paddle.concat(data_collector[key], axis=0).astype(paddle.float32)
             # data_collector_norm[key] = F.normalize(data_collector[key])
             data_collector_norm[key] = data_collector[key] / (data_collector[key] * data_collector[key]).sum(
                 dim=-1).sqrt().unsqueeze(-1)

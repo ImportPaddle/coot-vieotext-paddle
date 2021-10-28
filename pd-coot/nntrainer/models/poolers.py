@@ -234,7 +234,7 @@ class TemporalAvgPool(nn.Layer):
         # features (batch, seq_len, feat_dim)
         # mask (batch, seq_len) - 1 for values, 0 for padding
         # lengths (batch)
-        len_div = lengths.unsqueeze(-1).float()
+        len_div = lengths.unsqueeze(-1).astype(paddle.float32)
         result2 = paddle.sum(features, axis=1) / len_div
         # output shape (batch, feat_dim * num_dirs)
 
@@ -249,7 +249,7 @@ class TemporalAvgPoolFixed(nn.Layer):
 
         # MASK features
         f2 = features.masked_fill(mask.unsqueeze(-1), 0)
-        len_div = lengths.unsqueeze(-1).float()
+        len_div = lengths.unsqueeze(-1).astype(paddle.float32)
         result2 = paddle.sum(f2, axis=1) / len_div
         # output shape (batch, feat_dim * num_dirs)
         return result2

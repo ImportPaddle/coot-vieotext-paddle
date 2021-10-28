@@ -120,13 +120,13 @@ class RetrievalModelManager(models.BaseModelManager):
             batch_size = len(batch.clip_num)
             max_clip_len = paddle.max(batch.clip_num)
             clip_feat_dim = net_vid_local_config.output_dim
-            clip_emb_reshape = paddle.zeros((batch_size, max_clip_len, clip_feat_dim)).float()
-            clip_emb_mask = paddle.ones((batch_size, max_clip_len)).bool()
-            clip_emb_lens = paddle.zeros((batch_size,)).long()
+            clip_emb_reshape = paddle.zeros((batch_size, max_clip_len, clip_feat_dim), dtype=paddle.float32)
+            clip_emb_mask = paddle.ones((batch_size, max_clip_len), dtype=paddle.bool)
+            clip_emb_lens = paddle.zeros((batch_size,), dtype=paddle.int64)
             if self.cfg.use_cuda:
-                clip_emb_reshape = clip_emb_reshape.cuda(non_blocking=True)
-                clip_emb_mask = clip_emb_mask.cuda(non_blocking=True)
-                clip_emb_lens = clip_emb_lens.cuda(non_blocking=True)
+                clip_emb_reshape = clip_emb_reshape.cuda()
+                clip_emb_mask = clip_emb_mask.cuda()
+                clip_emb_lens = clip_emb_lens.cuda()
             pointer = 0
             for batch_num, clip_len in enumerate(batch.clip_num):
                 clip_emb_reshape[batch_num, :clip_len, :] = clip_emb[pointer:pointer + clip_len, :]
@@ -176,13 +176,13 @@ class RetrievalModelManager(models.BaseModelManager):
             batch_size = len(batch.sent_num)
             sent_feat_dim = net_text_local_config.output_dim
             max_sent_len = paddle.max(batch.sent_num)
-            sent_emb_reshape = paddle.zeros((batch_size, max_sent_len, sent_feat_dim)).float()
-            sent_emb_mask = paddle.ones((batch_size, max_sent_len)).bool()
-            sent_emb_lens = paddle.zeros((batch_size,)).long()
+            sent_emb_reshape = paddle.zeros((batch_size, max_sent_len, sent_feat_dim), dtype=paddle.float32)
+            sent_emb_mask = paddle.ones((batch_size, max_sent_len), dtype=paddle.bool)
+            sent_emb_lens = paddle.zeros((batch_size,), dtype=paddle.int64)
             if self.cfg.use_cuda:
-                sent_emb_reshape = sent_emb_reshape.cuda(non_blocking=True)
-                sent_emb_mask = sent_emb_mask.cuda(non_blocking=True)
-                sent_emb_lens = sent_emb_lens.cuda(non_blocking=True)
+                sent_emb_reshape = sent_emb_reshape.cuda()
+                sent_emb_mask = sent_emb_mask.cuda()
+                sent_emb_lens = sent_emb_lens.cuda()
             pointer = 0
             for batch_num, sent_len in enumerate(batch.sent_num):
                 sent_emb_reshape[batch_num, :sent_len, :] =\

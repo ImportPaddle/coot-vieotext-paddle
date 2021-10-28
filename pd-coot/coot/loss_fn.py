@@ -84,7 +84,7 @@ class ContrastiveLoss(nn.Layer):
         cost_im = (self.margin + scores - d2).clamp(min=0)
 
         # clear diagonals, where there is just the margin left
-        mask: paddle.Tensor = paddle.eye(scores.shape[0]).bool()
+        mask: paddle.Tensor = paddle.eye(shape=scores.shape[0], dtype=paddle.bool)
         if self.use_cuda:
             mask = mask.cuda(non_blocking=True)
         cost_s = cost_s.masked_fill_(mask, 0)
@@ -292,7 +292,7 @@ class CycleConsistencyLoss(nn.Layer):
         Returns:
             float loss
         """
-        l_seq = paddle.zeros_like(emb_mask).float()
+        l_seq = paddle.zeros_like(emb_mask, dtype=paddle.float32)
         batch_size, _ = emb_mask.shape
         if self.use_cuda:
             l_seq = l_seq.cuda(non_blocking=True)
@@ -309,7 +309,7 @@ class CycleConsistencyLoss(nn.Layer):
             # draw n_samp random integers without replacement in range emb_lens
             total_loss = 0
             for _batch, (c_loss, c_mask, c_nsamp) in enumerate(zip(l_seq, emb_mask, n_samp)):
-                idx = paddle.multinomial(c_mask.float(), int(c_nsamp))
+                idx = paddle.multinomial(c_mask.astype(paddle.float32), int(c_nsamp))
                 total_loss += c_loss[idx].mean()
             total_loss /= batch_size
         else:

@@ -62,7 +62,7 @@ dataset_train:
     preload_vid_feat: false
     preload_text_feat: false
     pin_memory: true
-    num_workers: 4
+    num_workers: 0
     drop_last: false
 dataset_val:
     same_as: "dataset_train"

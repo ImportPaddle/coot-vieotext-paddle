@@ -325,7 +325,7 @@ class LearnableClsToken(nn.Layer):
         features = paddle.concat([self.cls_param.unsqueeze(0).unsqueeze(0).repeat(batch, 1, 1), features], axis=1)
         assert paddle.all(features[0, 0, :] == self.cls_param)
         # add Falses to beginning of the mask
-        zeros = (self.fixed_ones.unsqueeze(0).repeat(batch, 1) * 0).bool()  # shape (batch, 1)
+        zeros = (self.fixed_ones.unsqueeze(0).repeat(batch, 1) * 0).astype(paddle.bool) # shape (batch, 1)
         mask = paddle.concat([zeros, mask], axis=1)
         # increment all lengths by one. not inplace!
         # noinspection PyAugmentAssignment
