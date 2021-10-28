@@ -251,7 +251,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
             self.hook_pre_train_epoch()  # pre-epoch hook: set models to train, time book-keeping
 
             # ---------- Dataloader Iteration ----------
-            for step, batch in enumerate(train_loader()):  # type: RetrievalDataBatchTuple
+            for step, batch in enumerate(train_loader):  # type: RetrievalDataBatchTuple
                 if step == 0:
                     self.logger.info(f"First step data ids: {batch.data_key[:min(4, len(batch.data_key))]}...")
                 if self.check_cuda():
@@ -386,9 +386,9 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
                 emb = all_data.get(key)
                 # collect embeddings into list, on CPU otherwise the gpu runs OOM
                 if data_collector.get(key) is None:
-                    data_collector[key] = [emb.cpu()]
+                    data_collector[key] = [emb.numpy()]
                 else:
-                    data_collector[key] += [emb.cpu()]
+                    data_collector[key] += [emb.numpy()]
             pbar.update()
         pbar.close()
 

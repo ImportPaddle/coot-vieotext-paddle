@@ -54,5 +54,5 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
-
+/pd-coot/tets.py
 /pd-coot/test.py
