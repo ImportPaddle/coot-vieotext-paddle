@@ -65,7 +65,7 @@ class MLP(nn.Layer):
     """
 
     def __init__(self, input_dim, cfg: MLPConfig):
-        super().__init__()
+        super(MLP, self).__init__()
 
         # setup auto-hidden_dim
         if cfg.hidden_dim == 0:
