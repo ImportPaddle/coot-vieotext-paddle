@@ -187,7 +187,7 @@ class TransformerLegacy(nn.Layer):
         self.output_dim = input_dim
         self.linear_out = None
         if self.cfg.linear_out:
-            self.linear_out = nn.Linear(self.cfg.output_dim, self.cfg.output_dim, bias=False)
+            self.linear_out = nn.Linear(self.cfg.output_dim, self.cfg.output_dim, bias_attr=False)
 
         # run the initializer
         init_network(self, cfg.weight_init_type, cfg.weight_init_std)
