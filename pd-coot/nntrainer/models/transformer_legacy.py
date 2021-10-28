@@ -117,7 +117,7 @@ class TransformerLegacy(nn.Layer):
     """
 
     def __init__(self, cfg: TransformerConfig, feature_dim: int):
-        super().__init__()
+        super(TransformerLegacy, self).__init__()
         error_txt = f"Transformer construction error: feature_dim "\
                     f"{feature_dim}. set output_dim of network before."
         assert feature_dim is not None, error_txt
@@ -302,7 +302,7 @@ class LearnableClsToken(nn.Layer):
     """
 
     def __init__(self, d_model: int):
-        super().__init__()
+        super(LearnableClsToken, self).__init__()
         # initialization will be handled by model
         cls_token = paddle.zeros(d_model)
         self.cls_param = paddle.ParamAttr(cls_token)
@@ -339,7 +339,7 @@ class TransformerEncoder(nn.Layer):
     """
 
     def __init__(self, cfg: TransformerEncoderConfig):
-        super().__init__()
+        super(TransformerEncoder, self).__init__()
 
         self.cfg = cfg
         assert self.cfg.num_layers > 0, f"{self.cfg.num_layers} layers in transformer is invalid"
@@ -390,7 +390,7 @@ class TransformerEncoderLayer(nn.Layer):
             activation_name: str = ActivationConst.GELU, activation_cfg: Optional[ActivationConfig] = None,
             norm_name: str = NormalizationConst.LAYERNORM_COOT,
             norm_cfg: Optional[NormalizationConfig] = None):
-        super().__init__()
+        super(TransformerEncoderLayer, self).__init__()
 
         if d_ff == 0:
             d_ff = d_model
@@ -429,7 +429,7 @@ class Sublayer(nn.Layer):
     """
 
     def __init__(self, sublayer, d_model: int, norm_name: str, norm_cfg: Optional[NormalizationConfig]):
-        super().__init__()
+        super(Sublayer, self).__init__()
 
         self.sublayer = sublayer
         self.layer_normalization = make_normalization_module(d_model, norm_name, norm_cfg)
@@ -458,7 +458,7 @@ class MultiHeadAttention(nn.Layer):
     """
 
     def __init__(self, num_heads, d_model, dropout_prob):
-        super().__init__()
+        super(MultiHeadAttention, self).__init__()
 
         assert d_model % num_heads == 0,\
             f"model dim {d_model} not divisible by {num_heads} heads"
@@ -567,7 +567,7 @@ class PointwiseFeedForwardNetwork(nn.Layer):
 
     def __init__(self, d_ff, d_model, dropout_prob, activation_name: str = "gelu",
                  activation_cfg: Optional[ActivationConfig] = None):
-        super().__init__()
+        super(PointwiseFeedForwardNetwork, self).__init__()
 
         self.feed_forward = nn.Sequential(
             nn.Linear(d_model, d_ff),

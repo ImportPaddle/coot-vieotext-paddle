@@ -89,7 +89,7 @@ class LayerNormalization(nn.Layer):
     Different results from the PyTorch implementation.
     """
     def __init__(self, normalized_shape: Union[int, List[int], any], epsilon: float = 1e-6):
-        super().__init__()
+        super(LayerNormalization, self).__init__()
 
         self.gain = paddle.ones([normalized_shape])
         self.bias = paddle.zeros([normalized_shape])

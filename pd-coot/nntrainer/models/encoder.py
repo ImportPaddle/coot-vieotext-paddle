@@ -80,7 +80,7 @@ class PositionalEncodingSinCos(nn.Layer):
     """
 
     def __init__(self, dim: int, dropout_prob: float = 0., max_len: int = 1000):
-        super().__init__()
+        super(PositionalEncodingSinCos, self).__init__()
         pe = paddle.zeros([max_len, dim], dtype='float64')
         position = paddle.arange(0, max_len).unsqueeze(1).astype('float64')
         dimension = paddle.arange(0, dim).astype('float64')

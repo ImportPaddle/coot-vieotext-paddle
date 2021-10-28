@@ -54,7 +54,7 @@ class ContrastiveLoss(nn.Layer):
     Regular Contrastive Loss between 2 groups of embeddings
     """
     def __init__(self, margin: float, max_violation: bool = False, norm: bool = True, use_cuda: bool = True):
-        super().__init__()
+        super(ContrastiveLoss, self).__init__()
         self.margin = margin
         self.sim = cosine_sim
         self.norm = norm
@@ -119,7 +119,7 @@ class CycleConsistencyLoss(nn.Layer):
     """
     def __init__(self, num_samples: int = 1, compute_half_cycles: bool = False, use_cuda: bool = True,
                  verbose: bool = False, print_fn: Callable = print):
-        super().__init__()
+        super(CycleConsistencyLoss, self).__init__()
         self.compute_half_cycles = compute_half_cycles
         self.use_cuda = use_cuda
         self.print_fn = print_fn

@@ -93,7 +93,7 @@ class MultiGenPool(nn.Layer):
     def __init__(
             self, n_pools: int, d_input: int, d_attn: int, n_heads: int, dropout_prob: float, activation_name: str,
             activation_cfg: Optional[ActivationConfig] = None):
-        super().__init__()
+        super(MultiGenPool, self).__init__()
         pools = []
         for _n in range(n_pools):
             pools.append(
@@ -117,7 +117,7 @@ class GenPool(nn.Layer):
     def __init__(
             self, d_input: int, d_attn: int, n_heads: int, dropout_prob: float, activation_name: str,
             activation_cfg: Optional[ActivationConfig] = None):
-        super().__init__()
+        super(GenPool, self).__init__()
 
         if d_attn == 0:
             d_attn = d_input
@@ -279,7 +279,7 @@ class TemporalFirstPool(nn.Layer):
     """
 
     def __init__(self, half_pool=False):
-        super().__init__()
+        super(TemporalFirstPool, self).__init__()
         self.half_pool = half_pool
 
     def forward(self, features, _, __):
