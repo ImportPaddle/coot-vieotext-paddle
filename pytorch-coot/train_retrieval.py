@@ -57,8 +57,9 @@ def main():
         os.system(cmd)
     train_set, val_set, train_loader, val_loader = create_retrieval_datasets_and_loaders(cfg, path_data)
 
-    if args.test_dataset:
-        # run dataset test and exit
+    if True:
+    # if args.test_dataset:
+        # run dataset test and exitåå
         run_retrieval_dataset_test(train_set, train_loader)
         return
     print("---------- Setup done!")
