@@ -259,7 +259,7 @@ class RetrievalDataset(Dataset):
         """
         return len(self.keys)
 
-    def __getitem__(self, item: int) -> RetrievalDataPointTuple:
+    def __getitem__(self, item: int) -> List[RetrievalDataPointTuple]:
         """
         Return a single datapoint.
 
@@ -329,9 +329,9 @@ class RetrievalDataset(Dataset):
             pointer += sent_cap_len
 
         # return single datapoint
-        return RetrievalDataPointTuple(
+        return [RetrievalDataPointTuple(
             key, data_key, sentences, vid_feat, vid_feat_len, par_feat, par_feat_len, clip_num,
-            clip_feat_list, clip_feat_len_list, sent_num, sent_feat_list, sent_feat_len_list)
+            clip_feat_list, clip_feat_len_list, sent_num, sent_feat_list, sent_feat_len_list)]
 
     def collate_fn(self, data_batch: List[RetrievalDataPointTuple]):
         """
@@ -340,20 +340,20 @@ class RetrievalDataset(Dataset):
         Returns:
         """
         batch_size = len(data_batch)
-        key: List[str] = [d.key for d in data_batch]
-        data_key: List[str] = [d.data_key for d in data_batch]
+        key: List[str] = [d[0].key for d in data_batch]
+        data_key: List[str] = [d[0].data_key for d in data_batch]
 
         # store input text: for each video, each sentence, store each word as a string
-        sentences: List[str] = [d.sentences for d in data_batch]
+        sentences: List[str] = [d[0].sentences for d in data_batch]
 
         # ---------- collate video features ----------
 
         # read video features list
-        list_vid_feat = [d.vid_feat for d in data_batch]
+        list_vid_feat = [d[0].vid_feat for d in data_batch]
         vid_feat_dim: int = list_vid_feat[0].shape[-1]
 
         # read video sequence lengths
-        list_vid_feat_len = [d.vid_feat_len for d in data_batch]
+        list_vid_feat_len = [d[0].vid_feat_len for d in data_batch]
         vid_feat_len = paddle.to_tensor(list_vid_feat_len, dtype=paddle.int64)
         vid_feat_max_len = int(vid_feat_len.max().numpy())
 
@@ -367,11 +367,11 @@ class RetrievalDataset(Dataset):
         # ---------- collate paragraph features ----------
 
         # read paragraph features list
-        list_par_feat = [d.par_feat for d in data_batch]
+        list_par_feat = [d[0].par_feat for d in data_batch]
         par_feat_dim: int = list_par_feat[0].shape[-1]
 
         # read paragraph sequence lengths
-        list_par_feat_len = [d.par_feat_len for d in data_batch]
+        list_par_feat_len = [d[0].par_feat_len for d in data_batch]
         par_feat_len = paddle.to_tensor(list_par_feat_len, dtype=paddle.int64)
         par_feat_max_len = int(par_feat_len.max().numpy())
 
@@ -385,15 +385,15 @@ class RetrievalDataset(Dataset):
         # ---------- collate clip features ----------
 
         # read list of list of clip features (features for each clip in each video)
-        list_clip_feat_list = [d.clip_feat_list for d in data_batch]
+        list_clip_feat_list = [d[0].clip_feat_list for d in data_batch]
 
         # read number of clips per video into tensor
-        list_clip_num = [d.clip_num for d in data_batch]
+        list_clip_num = [d[0].clip_num for d in data_batch]
         clip_num = paddle.to_tensor(list_clip_num, dtype=paddle.int64)
         total_clip_num = int(np.sum(list_clip_num))
 
         # read list of list of clip lengths (number of features for each clip in each video)
-        list_clip_feat_len_list = [d.clip_feat_len_list for d in data_batch]
+        list_clip_feat_len_list = [d[0].clip_feat_len_list for d in data_batch]
 
         # get length of longest clip in all videos
         clip_feat_max_len = int(np.max([np.max(len_single) for len_single in list_clip_feat_len_list]))
@@ -424,12 +424,12 @@ class RetrievalDataset(Dataset):
         # sentences will be pieced together from the paragraph features
 
         # read number of sentences per paragraph into tensor
-        list_sent_num = [d.sent_num for d in data_batch]
+        list_sent_num = [d[0].sent_num for d in data_batch]
         sent_num = paddle.to_tensor(list_sent_num, dtype=paddle.int64)
         total_sent_num = int(np.sum(list_sent_num))
 
         # read list of list of sentence lengths (number of features for each sentence in each paragraph)
-        list_sent_feat_len_list = [d.sent_feat_len_list for d in data_batch]
+        list_sent_feat_len_list = [d[0].sent_feat_len_list for d in data_batch]
 
         # get length of longest sentence in all paragraphs
         sent_feat_max_len = int(np.max([np.max(len_single) for len_single in list_sent_feat_len_list]))

@@ -78,6 +78,7 @@ def main():
             log_level=args.log_level, logger=None, print_graph=args.print_graph, reset=args.reset, load_best=load_best,
             load_epoch=args.load_epoch, load_model=args.load_model, inference_only=args.validate)
 
+        # if True:
         if args.validate:
             # run validation
             trainer.validate_epoch(val_loader, val_clips=cfg.val.val_clips, save_embs=args.save_embeddings)
