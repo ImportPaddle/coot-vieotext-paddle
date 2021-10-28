@@ -22,6 +22,8 @@ from coot.dataset_retrieval import RetrievalDataBatchTuple
 from coot.loss_fn import ContrastiveLoss, CycleConsistencyLoss, LossesConst
 from nntrainer import lr_scheduler, optimization, retrieval, trainer_base
 
+paddle.set_device('gpu') if paddle.is_compiled_with_cuda() else paddle.set_device('cpu')
+
 
 class RetrievalTrainer(trainer_base.BaseTrainer):
     """

@@ -31,6 +31,8 @@ from coot.configs_retrieval import RetrievalDatasetConfig
 from coot.features_loader import TextFeaturesLoader, VideoFeatureLoader
 from nntrainer import data as nn_data, data_text, maths, typext, utils, utils_paddle
 
+paddle.set_device('gpu') if paddle.is_compiled_with_cuda() else paddle.set_device('cpu')
+
 
 # ---------- Single datapoint and batch definition ----------
 

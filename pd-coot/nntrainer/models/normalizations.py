@@ -31,12 +31,26 @@ def make_normalization_module(normalized_shape: Union[int, List[int], any], name
 
     # create the module instance
     if name == NormalizationConst.NONE:
-        return nn.Layer()
+        return Identity()
     if name == NormalizationConst.LAYERNORM_PYTORCH:
         return nn.LayerNorm(normalized_shape, epsilon=cfg.eps)
     if name == NormalizationConst.LAYERNORM_COOT:
         return LayerNormalization(normalized_shape, epsilon=cfg.eps)
     raise NotImplementedError(f"Normalization {name} not found.")
+
+
+class Identity(nn.Layer):
+    r"""A placeholder identity operator that is argument-insensitive.
+
+    Args:
+        args: any argument (unused)
+        kwargs: any keyword argument (unused)
+    """
+    def __init__(self, *args, **kwargs):
+        super(Identity, self).__init__()
+
+    def forward(self, input):
+        return input
 
 
 class NormalizationConst(ConstantHolder):
