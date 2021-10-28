@@ -501,15 +501,15 @@ class MultiHeadAttention(nn.Layer):
         batch_size, key_len, d_model = key_projected.shape
         batch_size, value_len, d_model = value_projected.shape
 
-        query_heads = query_projected.reshape([batch_size, query_len, self.num_heads, d_head]).transpose(1, 2)
+        query_heads = query_projected.reshape([batch_size, query_len, self.num_heads, d_head]).transpose([0, 2, 1, 3])
         # print("query_heads", query_heads.shape)
         # (batch_size, num_heads, query_len, d_head)
 
-        key_heads = key_projected.reshape([batch_size, key_len, self.num_heads, d_head]).transpose(1, 2)
+        key_heads = key_projected.reshape([batch_size, key_len, self.num_heads, d_head]).transpose([0, 2, 1, 3])
         # print("key_heads", key_heads.shape)
         # (batch_size, num_heads, key_len, d_head)
 
-        value_heads = value_projected.reshape([batch_size, value_len, self.num_heads, d_head]).transpose(1, 2)
+        value_heads = value_projected.reshape([batch_size, value_len, self.num_heads, d_head]).transpose([0, 2, 1, 3])
         # print("value_heads", value_heads.shape)
         # (batch_size, num_heads, key_len, d_head)
 
@@ -535,7 +535,7 @@ class MultiHeadAttention(nn.Layer):
         # shape (batch_size, num_heads, query_len, d_head)
         # print("context_heads", context_heads.shape)
 
-        context_sequence = context_heads.transpose(1, 2)
+        context_sequence = context_heads.transpose([0, 2, 1, 3])
         # (batch_size, query_len, num_heads, d_head)
 
         context = context_sequence.reshape(batch_size, query_len, d_model)
@@ -551,7 +551,7 @@ class MultiHeadAttention(nn.Layer):
              query_heads: (batch_size, num_heads, query_len, d_head)
              key_heads: (batch_size, num_heads, key_len, d_head)
         """
-        key_heads_transposed = key_heads.transpose(2, 3)
+        key_heads_transposed = key_heads.transpose([0, 1, 3, 2])
         dot_product = paddle.matmul(query_heads, key_heads_transposed)
         # (batch_size, num_heads, query_len, key_len)
 
