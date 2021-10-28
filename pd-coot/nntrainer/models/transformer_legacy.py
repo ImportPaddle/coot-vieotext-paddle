@@ -490,7 +490,7 @@ class MultiHeadAttention(nn.Layer):
             output: (batch_size, query_len, model_dim)
         """
         # print("attention mask", mask)
-        batch_size, query_len, d_model = query.size()
+        batch_size, query_len, d_model = query.shape
 
         d_head = d_model // self.num_heads
 
@@ -498,18 +498,18 @@ class MultiHeadAttention(nn.Layer):
         key_projected = self.key_projection(key)  # shape (batch_size, key_len, num_heads, d_head)
         value_projected = self.value_projection(value)  # shape (batch_size, key_len, num_heads, d_head)
 
-        batch_size, key_len, d_model = key_projected.size()
-        batch_size, value_len, d_model = value_projected.size()
+        batch_size, key_len, d_model = key_projected.shape
+        batch_size, value_len, d_model = value_projected.shape
 
-        query_heads = query_projected.view(batch_size, query_len, self.num_heads, d_head).transpose(1, 2)
+        query_heads = query_projected.reshape([batch_size, query_len, self.num_heads, d_head]).transpose(1, 2)
         # print("query_heads", query_heads.shape)
         # (batch_size, num_heads, query_len, d_head)
 
-        key_heads = key_projected.view(batch_size, key_len, self.num_heads, d_head).transpose(1, 2)
+        key_heads = key_projected.reshape([batch_size, key_len, self.num_heads, d_head]).transpose(1, 2)
         # print("key_heads", key_heads.shape)
         # (batch_size, num_heads, key_len, d_head)
 
-        value_heads = value_projected.view(batch_size, value_len, self.num_heads, d_head).transpose(1, 2)
+        value_heads = value_projected.reshape([batch_size, value_len, self.num_heads, d_head]).transpose(1, 2)
         # print("value_heads", value_heads.shape)
         # (batch_size, num_heads, key_len, d_head)
 

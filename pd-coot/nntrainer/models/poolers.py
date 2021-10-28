@@ -202,7 +202,7 @@ class GenPool(nn.Layer):
         # shape (batch, seq_len, input_dim)
 
         # use the attention weights to pool over the sequence and done
-        pooled = (features * smweights).sum(dim=1)
+        pooled = (features * smweights).sum(axis=1)
 
         # return
         return pooled
@@ -284,5 +284,5 @@ class TemporalFirstPool(nn.Layer):
         result2 = features[:, 0, :]
         if self.half_pool:
             _, feat_dim = result2.shape
-            result2 = result2.reshape(-1, 2, feat_dim // 2).mean(dim=1)
+            result2 = result2.reshape(-1, 2, feat_dim // 2).mean(axis=1)
         return result2

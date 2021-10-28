@@ -183,7 +183,7 @@ def np_str_len(str_arr: Union[np.ndarray, Iterable[str]]) -> np.ndarray:
 
     # see the link in the docstring as an explanation of what exactly is happening here
     try:
-        v = str_arr.view(np.uint32).reshape(str_arr.size, -1)
+        v = str_arr.view(np.uint32).reshape([str_arr.size, -1])
     except TypeError as e:
         print(f"Input {str_arr} shape {str_arr.shape} dtype {str_arr.dtype}")
         raise e

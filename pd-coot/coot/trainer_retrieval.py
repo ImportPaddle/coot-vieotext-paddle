@@ -400,7 +400,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
             data_collector[key] = paddle.concat(data_collector[key], axis=0).astype(paddle.float32)
             # data_collector_norm[key] = F.normalize(data_collector[key])
             data_collector_norm[key] = data_collector[key] / (data_collector[key] * data_collector[key]).sum(
-                dim=-1).sqrt().unsqueeze(-1)
+                axis=-1).sqrt().unsqueeze(-1)
 
         if save_embs:
             # save unnormalized embeddings

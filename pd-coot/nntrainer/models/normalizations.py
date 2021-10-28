@@ -96,6 +96,6 @@ class LayerNormalization(nn.Layer):
         self.epsilon = epsilon
 
     def forward(self, x):
-        mean = x.mean(dim=-1, keepdim=True)
-        std = x.std(dim=-1, keepdim=True)
+        mean = x.mean(axis=-1, keepdim=True)
+        std = x.std(axis=-1, keepdim=True)
         return self.gain * (x - mean) / (std + self.epsilon) + self.bias

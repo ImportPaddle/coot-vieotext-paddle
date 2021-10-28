@@ -72,7 +72,7 @@ class ContrastiveLoss(nn.Layer):
         """
         # compute image-sentence score matrix - how close is im(y) to s(x)
         scores = self.sim(im, s)
-        diagonal = scores.diag().view(im.size(0), 1)
+        diagonal = scores.diag().reshape([im.shape[0], 1])
         d1 = diagonal.expand_as(scores)
         d2 = diagonal.t().expand_as(scores)
 
@@ -268,7 +268,7 @@ class CycleConsistencyLoss(nn.Layer):
 
         # with weights, calculate soft nearest neighbor in target
         # embedding space
-        soft_nn = target_emb.unsqueeze(dim=1) * weights_alpha.unsqueeze(dim=3)
+        soft_nn = target_emb.unsqueeze(axis=1) * weights_alpha.unsqueeze(axis=3)
         soft_nn = paddle.sum(soft_nn, axis=2)
 
         return soft_nn, weights_alpha, distance
@@ -295,7 +295,7 @@ class CycleConsistencyLoss(nn.Layer):
         l_seq = paddle.zeros_like(emb_mask, dtype=paddle.float32)
         batch_size, _ = emb_mask.shape
         if self.use_cuda:
-            l_seq = l_seq.cuda(non_blocking=True)
+            l_seq = l_seq.cuda()
         if self.weight_index_gauss != 0 or self.weight_index_simple != 0:
             (loss_simple_per_seq, loss_gauss_per_seq, var_reg_per_seq) = self.compute_loss_index_gauss(
                 emb_mask, emb_lens, emb_max_len, beta)
@@ -314,7 +314,7 @@ class CycleConsistencyLoss(nn.Layer):
             total_loss /= batch_size
         else:
             # no subsampling, average over all losses
-            total_loss = (l_seq.sum(dim=-1) / emb_lens).mean(dim=-1)
+            total_loss = (l_seq.sum(axis=-1) / emb_lens).mean(axis=-1)
 
         return total_loss
 
