@@ -73,19 +73,20 @@ class ContrastiveLoss(nn.Layer):
         """
         # compute image-sentence score matrix - how close is im(y) to s(x)
         scores = self.sim(im, s)
-        diagonal = scores.diag().reshape([im.shape[0], 1])
+        diagonal = paddle.diag(scores).reshape([im.shape[0], 1])
+        # diagonal = scores.diag().reshape([im.shape[0], 1])
         d1 = diagonal.expand_as(scores)
         d2 = diagonal.t().expand_as(scores)
 
         # compare every diagonal score to scores in its column
         # caption retrieval
-        cost_s = (self.margin + scores - d1).clamp(min=0)
+        cost_s = (self.margin + scores - d1).clip(min=0)
         # compare every diagonal score to scores in its row
         # image retrieval
-        cost_im = (self.margin + scores - d2).clamp(min=0)
+        cost_im = (self.margin + scores - d2).clip(min=0)
 
         # clear diagonals, where there is just the margin left
-        mask: paddle.Tensor = paddle.eye(shape=scores.shape[0]).astype(paddle.bool)
+        mask: paddle.Tensor = paddle.eye(scores.shape[0]).astype(paddle.bool)
         if self.use_cuda:
             mask = mask.cuda()
         cost_s = paddle.where(mask == True, paddle.to_tensor(0.), cost_s)
@@ -99,12 +100,13 @@ class ContrastiveLoss(nn.Layer):
             cost_im = cost_im.max(0)[0]
 
         if self.norm:
-            return (cost_s.sum() + cost_im.sum()).div(im.shape[0] * s.shape[0])
+            return (cost_s.sum() + cost_im.sum()).divide(
+                paddle.to_tensor(im.shape[0] * s.shape[0], dtype=paddle.float32))
         return cost_s.sum() + cost_im.sum()
 
 
 def compute_mean_distance_l2(c, s):
-    return paddle.mean((c - s) ** 2, axis=-1)
+    return paddle.mean(paddle.to_tensor((c - s) ** 2, dtype=paddle.float32), axis=-1)
 
 
 def compute_mean_distance_negative_l2(c, s):
@@ -125,10 +127,9 @@ class CycleConsistencyLoss(nn.Layer):
         self.print_fn = print_fn
         self.verbose = verbose
         self.num_samples = num_samples
-        self.num_samples_tensor = (paddle.ones([1]) * self.num_samples)
+        self.num_samples_tensor = (paddle.ones([1], dtype=paddle.int64) * self.num_samples)
         if self.use_cuda:
-            self.num_samples_tensor = self.num_samples_tensor.cuda(
-                non_blocking=True)
+            self.num_samples_tensor = self.num_samples_tensor.cuda()
 
         # define loss functions (currently L2)
         self.loss_distance_fn = compute_mean_distance_l2
@@ -261,7 +262,9 @@ class CycleConsistencyLoss(nn.Layer):
         # d holds distances (batch_size, source_num, target_num)
 
         # set masked distances to (almost) negative infinity
-        distance = paddle.where(~total_mask == 1, paddle.to_tensor(self.proximity_mask_val), distance)
+        distance = paddle.where(~total_mask == 1,
+                                paddle.to_tensor(self.proximity_mask_val, dtype=paddle.float32),
+                                distance)
         # distance.masked_fill_(~total_mask, self.proximity_mask_val)
         # shape (batch_size, source_max_len, target_max_len)
         # masked values are set to very high negative number for softmax
@@ -309,7 +312,7 @@ class CycleConsistencyLoss(nn.Layer):
         # subsample loss if requested
         if self.num_samples != -1:
             # check max amount of samples possible (depends on number of clips)
-            n_samp = paddle.min(emb_lens, self.num_samples_tensor)
+            n_samp = paddle.minimum(emb_lens, self.num_samples_tensor)
             # draw n_samp random integers without replacement in range emb_lens
             total_loss = 0
             for _batch, (c_loss, c_mask, c_nsamp) in enumerate(zip(l_seq, emb_mask, n_samp)):
@@ -347,7 +350,7 @@ class CycleConsistencyLoss(nn.Layer):
         # original index = arange
         idx_orig = paddle.arange(emb_max_len)
         if self.use_cuda:
-            idx_orig = idx_orig.cuda(non_blocking=True)
+            idx_orig = idx_orig.cuda()
         # add batch dim
         idx_orig.unsqueeze_(0)
         # shape (1, seq_len)
@@ -367,12 +370,13 @@ class CycleConsistencyLoss(nn.Layer):
         # shape (batch, seq_len, seq_len)
 
         # mask values that exceed the sequence length
-        distance = paddle.where(~emb_mask_rep == 1, paddle.to_tensor(0), distance)
+        distance = paddle.where(~emb_mask_rep == 1, paddle.to_tensor(0.), distance)
         # distance.masked_fill_(~emb_mask_rep, 0)
 
         # diagonal of last 2 dims of this distance tensor contains distance
         # from soft index i to hard index i, this is the loss distance
-        loss_simple_per_seq = distance.diagonal(dim1=-2, dim2=-1)
+        loss_simple_per_seq = paddle.to_tensor(distance.numpy().diagonal(0, -2, -1), dtype=paddle.float32)
+        # loss_simple_per_seq = distance.diagonal(dim1=-2, dim2=-1)
         # shape (batch, seq_len)
 
         # to get variance, multiply with beta (softmax output weights)
@@ -381,7 +385,7 @@ class CycleConsistencyLoss(nn.Layer):
 
         # calculate regularizer loss on the variance and apply mask
         var_reg_per_seq = self.lambda_index_gauss * .5 * paddle.log(self.var_log_eps + variance)
-        distance = paddle.where(emb_mask == 1, paddle.to_tensor(0), distance)
+        var_reg_per_seq = paddle.where(emb_mask == 1, paddle.to_tensor(0.), var_reg_per_seq)
         # var_reg_per_seq.masked_fill_(emb_mask, 0)
         # shape (batch, seq_len)
 

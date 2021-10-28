@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional, Union
 import paddle
 from paddle import nn
 from paddle.fluid.layers.nn import pad
+from paddle.framework import dtype
 
 from nntrainer import typext
 from nntrainer.models.activations import ActivationConfig, make_activation_module
@@ -217,7 +218,9 @@ class TemporalMaxPool(nn.Layer):
         mask_expanded = mask.unsqueeze(-1)
         value = -INF
         try:
-            feat_fill = paddle.where(mask_expanded == 1, value, features)
+            feat_fill = paddle.where(mask_expanded == 1, 
+            paddle.to_tensor(value, dtype=paddle.float32), 
+            features)
             # feat_fill = features.masked_fill(mask_expanded, value)
         except RuntimeError as e:
             print(
@@ -250,7 +253,7 @@ class TemporalAvgPoolFixed(nn.Layer):
         # lengths (batch)
 
         # MASK features
-        f2 = paddle.where(mask.unsqueeze(-1) == 1, paddle.to_tensor(0), features)
+        f2 = paddle.where(mask.unsqueeze(-1) == 1, paddle.to_tensor(0.), features)
         # f2 = features.masked_fill(mask.unsqueeze(-1), 0)
         len_div = lengths.unsqueeze(-1).astype(paddle.float32)
         result2 = paddle.sum(f2, axis=1) / len_div
