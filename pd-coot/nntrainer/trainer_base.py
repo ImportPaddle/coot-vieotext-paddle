@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from timeit import default_timer as timer
 from typing import Any, Dict, List, Optional, Tuple
-from initializers import clip_grad_norm_
+from nntrainer.initializers import clip_grad_norm_
 
 import paddle
 from paddle import nn, ParamAttr
