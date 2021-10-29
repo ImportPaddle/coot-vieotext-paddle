@@ -87,8 +87,7 @@ class ContrastiveLoss(nn.Layer):
 
         # clear diagonals, where there is just the margin left
         mask: paddle.Tensor = paddle.eye(scores.shape[0]).astype(paddle.bool)
-        if self.use_cuda:
-            mask = mask.cuda()
+
         cost_s = paddle.where(mask == True, paddle.to_tensor(0.), cost_s)
         cost_im = paddle.where(mask == True, paddle.to_tensor(0.), cost_im)
         # cost_s = cost_s.masked_fill_(mask, 0)
@@ -128,8 +127,6 @@ class CycleConsistencyLoss(nn.Layer):
         self.verbose = verbose
         self.num_samples = num_samples
         self.num_samples_tensor = (paddle.ones([1], dtype=paddle.int64) * self.num_samples)
-        if self.use_cuda:
-            self.num_samples_tensor = self.num_samples_tensor.cuda()
 
         # define loss functions (currently L2)
         self.loss_distance_fn = compute_mean_distance_l2
@@ -301,8 +298,6 @@ class CycleConsistencyLoss(nn.Layer):
         """
         l_seq = paddle.zeros_like(emb_mask, dtype=paddle.float32)
         batch_size, _ = emb_mask.shape
-        if self.use_cuda:
-            l_seq = l_seq.cuda()
         if self.weight_index_gauss != 0 or self.weight_index_simple != 0:
             (loss_simple_per_seq, loss_gauss_per_seq, var_reg_per_seq) = self.compute_loss_index_gauss(
                 emb_mask, emb_lens, emb_max_len, beta)
@@ -349,8 +344,6 @@ class CycleConsistencyLoss(nn.Layer):
         """
         # original index = arange
         idx_orig = paddle.arange(emb_max_len)
-        if self.use_cuda:
-            idx_orig = idx_orig.cuda()
         # add batch dim
         idx_orig.unsqueeze_(0)
         # shape (1, seq_len)
