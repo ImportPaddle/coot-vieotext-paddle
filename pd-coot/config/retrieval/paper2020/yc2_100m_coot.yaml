@@ -135,14 +135,14 @@ net_text_global:
     same_as: "net_video_global"
 # ---------- Optimizer ----------
 optimizer:
-    name: "radam"
-    lr: 9e-4
-    weight_decay: 0
+    name: "adam"
+    lr: 1e-3
+    weight_decay: 2e-5
     weight_decay_for_bias: true
-    momentum: 0.56
+    momentum: 0.9
     sgd_nesterov: false
-    adam_beta2: 0.98
-    adam_eps: 1.5e-09
+    adam_beta2: 0.999
+    adam_eps: 1e-8
     adam_amsgrad: false
     radam_degentosgd: false
     lr_decay_mult: false
@@ -150,9 +150,9 @@ optimizer:
 lr_scheduler:
     name: "reduce_opw"
     warmup_type: "epoch"
-    warmup_epochs: 0
+    warmup_epochs: 3
     rop_factor: 0.1
-    rop_patience: 5
+    rop_patience: 2
     rop_cooldown: 3
     rop_min_lr_factor: 0
 # ---------- Logging / Saving ----------

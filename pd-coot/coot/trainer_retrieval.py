@@ -263,7 +263,8 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
                 self.hook_pre_step_timer()  # hook for step timing
 
                 # ---------- forward pass ----------
-                with auto_cast(enable=self.cfg.fp16_train):
+                with auto_cast(enable=False):
+                # with auto_cast(enable=self.cfg.fp16_train):
                     visual_data = self.model_mgr.encode_visual(batch)
                     text_data = self.model_mgr.encode_text(batch)
                     if self.cfg.train.loss_func == LossesConst.CONTRASTIVE:
