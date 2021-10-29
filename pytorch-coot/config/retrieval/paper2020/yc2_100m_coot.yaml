@@ -62,7 +62,7 @@ dataset_train:
     preload_vid_feat: false
     preload_text_feat: false
     pin_memory: true
-    num_workers: 0
+    num_workers: 4
     drop_last: false
 dataset_val:
     same_as: "dataset_train"
@@ -167,13 +167,10 @@ saving:
     save_best: true
     save_opt_state: true
 # ---------- Technical PyTorch settings ----------
-use_cuda: false
-#use_cuda: true
+use_cuda: true
 use_multi_gpu: true
-cudnn_enabled: false
-cudnn_benchmark: false
-#cudnn_enabled: true
-#cudnn_benchmark: true
+cudnn_enabled: true
+cudnn_benchmark: true
 cudnn_deterministic: false
 cuda_non_blocking: true
 fp16_train: true

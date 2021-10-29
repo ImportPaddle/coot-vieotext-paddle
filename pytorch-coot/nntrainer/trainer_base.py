@@ -8,13 +8,15 @@ from pathlib import Path
 from timeit import default_timer as timer
 from typing import Any, Dict, List, Optional, Tuple
 
-import paddle
-from paddle import nn, ParamAttr
-from paddle.amp import GradScaler
-from paddle.optimizer import Optimizer
-from paddle.io import DataLoader
+import torch as th
+from torch import nn
+from torch.backends import cudnn
+from torch.cuda.amp import GradScaler
+from torch.nn.utils import clip_grad_norm_
+from torch.optim import Optimizer
+from torch.utils.data.dataloader import DataLoader
 
-from nntrainer import lr_scheduler, metric, models, trainer_configs, utils, utils_paddle, utils_yaml
+from nntrainer import lr_scheduler, metric, models, trainer_configs, utils, utils_torch, utils_yaml
 from nntrainer.experiment_organization import ExperimentFilesHandler
 from nntrainer.metric import DefaultMetricsConst as Metrics
 from nntrainer.utils import MetricComparisonConst
@@ -44,7 +46,7 @@ class BaseTrainer:
         reset: Delete entire experiment and restart from scratch.
         load_best: Whether to load the best epoch (default loads last epoch to continue training).
         load_epoch: Whether to load a specific epoch.
-        load_model: Load model given by file papaddle.
+        load_model: Load model given by file path.
         is_test: Removes some parts that are not needed during inference for speedup.
         exp_files_handler: Optionally provide an instance to overwrite the standard ExperimentFilesHandler
     """
@@ -102,20 +104,20 @@ class BaseTrainer:
 
         # logs some infos
         self.logger.info(f"Running on cuda: {self.cfg.use_cuda}, multi-gpu: {self.cfg.use_multi_gpu}, "
-                         f"gpus found: {paddle.get_device()}, fp16 amp: {self.cfg.fp16_train}.")
-        # cudnn.enabled = self.cfg.cudnn_enabled
-        # cudnn.benchmark = self.cfg.cudnn_benchmark
-        # cudnn.deterministic = self.cfg.cudnn_deterministic
+                         f"gpus found: {th.cuda.device_count()}, fp16 amp: {self.cfg.fp16_train}.")
+        cudnn.enabled = self.cfg.cudnn_enabled
+        cudnn.benchmark = self.cfg.cudnn_benchmark
+        cudnn.deterministic = self.cfg.cudnn_deterministic
 
         # move models to device
         for model in self.model_mgr.model_dict.values():
             try:
                 if self.cfg.use_cuda:
-                    if not paddle.device.is_compiled_with_cuda():
+                    if not th.cuda.is_available():
                         raise RuntimeError(
                             "CUDA requested but not available! Use --no_cuda to run on CPU.")
                     if self.cfg.use_multi_gpu:
-                        model = paddle.DataParallel(model)
+                        model = nn.DataParallel(model)
                     model = model.cuda()
             except RuntimeError as e:
                 raise RuntimeError(f"RuntimeError when putting model {type(model)} to cuda with DataParallel "
@@ -220,7 +222,7 @@ class BaseTrainer:
         """
         raise NotImplementedError
 
-    @paddle.no_grad()
+    @th.no_grad()
     def validate_epoch(self, val_loader: DataLoader, **kwargs) -> (
             Tuple[float, float, bool, Tuple[Dict[str, float], Any]]):
         """
@@ -237,7 +239,7 @@ class BaseTrainer:
 
     # ---------- Optionally override these if you need more than one optimizer ----------
 
-    def get_opt_state(self) -> Dict[str, Dict[str, ParamAttr]]:
+    def get_opt_state(self) -> Dict[str, Dict[str, nn.Parameter]]:
         """
         Return the current optimizer and scheduler state.
 
@@ -249,15 +251,15 @@ class BaseTrainer:
             "lr_scheduler": self.lr_scheduler.state_dict()
         }
 
-    def set_opt_state(self, opt_state: Dict[str, Dict[str, paddle.ParamAttr]]) -> None:
+    def set_opt_state(self, opt_state: Dict[str, Dict[str, nn.Parameter]]) -> None:
         """
         Set the current optimizer and scheduler state from the given state.
 
         Args:
             opt_state: Dictionary of optimizer and scheduler state dict.
         """
-        self.optimizer.set_state_dict(opt_state["optimizer"])
-        self.lr_scheduler.set_state_dict(opt_state["lr_scheduler"])
+        self.optimizer.load_state_dict(opt_state["optimizer"])
+        self.lr_scheduler.load_state_dict(opt_state["lr_scheduler"])
 
     # ---------- Misc. public methods ----------
     def check_cuda(self):
@@ -360,7 +362,7 @@ class BaseTrainer:
             if self.load_model:
                 # load model from file. this would start training from epoch 0, but is usually only used for validation.
                 self.logger.info(f"Loading model from checkpoint file {self.load_model}")
-                model_state = paddle.load(str(self.load_model))
+                model_state = th.load(str(self.load_model))
                 self.model_mgr.set_model_state(model_state)
             else:
                 # load model given an epoch. also reload metrics and optimization to correctly continue training.
@@ -379,7 +381,7 @@ class BaseTrainer:
         self.timer_train_start = timer()
         self.logger.info(f"Training from {self.state.current_epoch} to {self.cfg.train.num_epochs}")
         self.logger.info("Training Models on devices " + ", ".join([
-            f"{key}: {next(iter(val.parameters())).place}" for key, val in self.model_mgr.model_dict.items()]))
+            f"{key}: {next(val.parameters()).device}" for key, val in self.model_mgr.model_dict.items()]))
 
     def hook_post_train(self) -> None:
         """
@@ -464,7 +466,7 @@ class BaseTrainer:
         for field in fields:
             time_value = self.metrics.meters[field].avg
             time_name_short = str(field).split("/")[-1].split("_")[-1]
-            time_str_list += [time_name_short, f"{time_value * 1000:.2f}ms", f"{time_value / time_total if time_total else .1:.1%}"]
+            time_str_list += [time_name_short, f"{time_value * 1000:.2f}ms", f"{time_value / time_total:.1%}"]
         self.logger.info(" ".join(time_str_list))
 
         # feed step-based metrics to tensorboard and collector
@@ -501,7 +503,7 @@ class BaseTrainer:
         self.timedelta_step_backward = timer() - self.timer_step_backward
 
     def hook_post_step(
-            self, epoch_step: int, loss: paddle.Tensor, lr: float, additional_log: Optional[str] = None,
+            self, epoch_step: int, loss: th.Tensor, lr: float, additional_log: Optional[str] = None,
             disable_grad_clip: bool = False) -> bool:
         """
         Hook called after one optimization step.
@@ -529,7 +531,7 @@ class BaseTrainer:
             # get all parameters to clip
             _params, _param_names, params_flat = self.model_mgr.get_all_params()
             # clip using pytorch
-            total_norm = paddle.nn.ClipGradByNorm(params_flat, self.cfg.train.clip_gradient)
+            total_norm = clip_grad_norm_(params_flat, self.cfg.train.clip_gradient)
             if total_norm > self.cfg.train.clip_gradient:
                 # print log message if gradients where clipped
                 grad_clip_coef = self.cfg.train.clip_gradient / (total_norm + 1e-6)
@@ -543,7 +545,7 @@ class BaseTrainer:
             str_step = ("{:" + str(len(str(self.steps_per_epoch))) + "d}").format(epoch_step)
             print_string = "".join([
                 f"E{self.state.current_epoch}[{str_step}/{self.steps_per_epoch}] T {total_train_time:.3f}m ",
-                f"LR {lr:.1e} L {loss.numpy()[0]:.4f} ",
+                f"LR {lr:.1e} L {loss:.4f} ",
                 f"Grad {self.state.last_grad_norm:.3e} " if self.state.last_grad_norm != 0 else "",
                 f"{additional_log}" if additional_log is not None else ""])
             self.logger.info(print_string)
@@ -553,7 +555,7 @@ class BaseTrainer:
                 self.state.epoch_step == self.cfg.logging.step_gpu_once and self.cfg.logging.step_gpu_once > 0):
             # get the current profile values
             (gpu_names, total_memory_per, used_memory_per, load_per, ram_total, ram_used, ram_avail
-             ) = utils_paddle.profile_gpu_and_ram()
+             ) = utils_torch.profile_gpu_and_ram()
             # average / sum over all GPUs
             gpu_mem_used: float = sum(used_memory_per)
             gpu_mem_total: float = sum(total_memory_per)
@@ -660,12 +662,12 @@ class BaseTrainer:
         # models
         models_file = self.exp.get_models_file(self.state.current_epoch)
         state = self.model_mgr.get_model_state()
-        paddle.save(state, str(models_file))
+        th.save(state, str(models_file))
 
         # optimizer and scheduler
         opt_file = self.exp.get_optimizer_file(self.state.current_epoch)
         opt_state = self.get_opt_state()
-        paddle.save(opt_state, str(opt_file))
+        th.save(opt_state, str(opt_file))
 
     def _load_checkpoint(self, epoch) -> None:
         """
@@ -680,13 +682,13 @@ class BaseTrainer:
 
         # models
         models_file = self.exp.get_models_file(epoch)
-        model_state = paddle.load(str(models_file))
+        model_state = th.load(str(models_file))
         self.model_mgr.set_model_state(model_state)
 
         # optimizer and scheduler
         if not self.is_test:
             opt_file = self.exp.get_optimizer_file(self.state.current_epoch)
-            opt_state = paddle.load(str(opt_file))
+            opt_state = th.load(str(opt_file))
             self.set_opt_state(opt_state)
         else:
             self.logger.info("Don't load optimizer and scheduler during inference.")

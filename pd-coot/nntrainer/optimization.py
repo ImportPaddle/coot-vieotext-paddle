@@ -60,7 +60,7 @@ def make_optimizer(cfg: OptimizerConfig, params: Iterable[paddle.Tensor]) -> Opt
                                     weight_decay=cfg.weight_decay)
             # , amsgrad=cfg.adam_amsgrad
     elif cfg.name == OptimizerConst.RADAM:
-        optimizer = Adam(parameters=params, learning_rate=cfg.lr, beta1=cfg.momentum, beta2=cfg.adam_beta2, epsilon=cfg.adam_eps,
+        optimizer = AdamW(parameters=params, learning_rate=cfg.lr, beta1=cfg.momentum, beta2=cfg.adam_beta2, epsilon=cfg.adam_eps,
                           weight_decay=paddle.to_tensor(cfg.weight_decay))
         """
          def __init__(self,

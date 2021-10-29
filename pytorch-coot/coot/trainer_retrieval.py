@@ -8,11 +8,11 @@ from timeit import default_timer as timer
 from typing import Dict, Optional, Tuple
 
 import h5py
-import paddle
-from paddle import nn 
-from paddle.amp import auto_cast
-from paddle.io import DataLoader
-from paddle.nn import functional as F
+import torch as th
+from torch import nn
+from torch.cuda.amp import autocast
+from torch.nn import functional as F
+from torch.utils import data
 from tqdm import tqdm
 
 from coot import model_retrieval
@@ -21,8 +21,6 @@ from coot.configs_retrieval import (
 from coot.dataset_retrieval import RetrievalDataBatchTuple
 from coot.loss_fn import ContrastiveLoss, CycleConsistencyLoss, LossesConst
 from nntrainer import lr_scheduler, optimization, retrieval, trainer_base
-
-paddle.set_device('gpu') if paddle.is_compiled_with_cuda() else paddle.set_device('cpu')
 
 
 class RetrievalTrainer(trainer_base.BaseTrainer):
@@ -47,7 +45,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         reset: Delete entire experiment and restart from scratch.
         load_best: Whether to load the best epoch (default loads last epoch to continue training).
         load_epoch: Whether to load a specific epoch.
-        load_model: Load model given by file papaddle.
+        load_model: Load model given by file path.
         inference_only: Removes some parts that are not needed during inference for speedup.
     """
 
@@ -111,8 +109,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         if not self.is_test:
             # create optimizer
             params, _param_names, _params_flat = self.model_mgr.get_all_params()
-            # self.optimizer = optimization.make_optimizer(self.cfg.optimizer, params)
-            self.optimizer = optimization.make_optimizer(self.cfg.optimizer, _params_flat)
+            self.optimizer = optimization.make_optimizer(self.cfg.optimizer, params)
 
             # create lr scheduler
             self.lr_scheduler = lr_scheduler.make_lr_scheduler(
@@ -122,7 +119,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         # post init hook for checkpoint loading
         self.hook_post_init()
 
-    def compute_align_loss(self, visual_emb: paddle.Tensor, text_emb: paddle.Tensor) -> paddle.Tensor:
+    def compute_align_loss(self, visual_emb: th.Tensor, text_emb: th.Tensor) -> th.Tensor:
         """
         Compute alignment contrastive loss (Matching between visual and text features).
 
@@ -135,7 +132,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         """
         return self.loss_contr(visual_emb, text_emb)
 
-    def compute_cluster_loss(self, visual_emb: paddle.Tensor, text_emb: paddle.Tensor) -> paddle.Tensor:
+    def compute_cluster_loss(self, visual_emb: th.Tensor, text_emb: th.Tensor) -> th.Tensor:
         """
         Compute clustering contrastive loss (Matching inside both visual and text features).
 
@@ -149,7 +146,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         return (self.loss_contr(visual_emb, visual_emb) + self.loss_contr(text_emb, text_emb)) / 2
 
     def compute_total_constrastive_loss(self, visual_data: model_retrieval.RetrievalVisualEmbTuple,
-                                        text_data: model_retrieval.RetrievalTextEmbTuple) -> paddle.Tensor:
+                                        text_data: model_retrieval.RetrievalTextEmbTuple) -> th.Tensor:
         """
         Compute total contrastive loss depending on config.
 
@@ -185,7 +182,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         return loss
 
     def compute_total_ce_loss(self, visual_data: model_retrieval.RetrievalVisualEmbTuple,
-                              text_data: model_retrieval.RetrievalTextEmbTuple) -> paddle.Tensor:
+                              text_data: model_retrieval.RetrievalTextEmbTuple) -> th.Tensor:
         """
         Compute total contrastive loss depending on config.
 
@@ -217,7 +214,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         return sum(losses) + sum(cluster_losses)
 
     def compute_cyclecons_loss(self, visual_data: model_retrieval.RetrievalVisualEmbTuple,
-                               text_data: model_retrieval.RetrievalTextEmbTuple) -> paddle.Tensor:
+                               text_data: model_retrieval.RetrievalTextEmbTuple) -> th.Tensor:
         """
         Compute Cycle-Consistency loss.
 
@@ -235,7 +232,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
             return self.cfg.train.loss_cycle_cons * (clip_clip_loss + sent_sent_loss)
         return 0
 
-    def train_model(self, train_loader:DataLoader, val_loader:DataLoader) -> None:
+    def train_model(self, train_loader: data.DataLoader, val_loader: data.DataLoader) -> None:
         """
         Train epochs until done.
 
@@ -254,7 +251,6 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
 
             # ---------- Dataloader Iteration ----------
             for step, batch in enumerate(train_loader):  # type: RetrievalDataBatchTuple
-                batch = RetrievalDataBatchTuple(*batch)
                 if step == 0:
                     self.logger.info(f"First step data ids: {batch.data_key[:min(4, len(batch.data_key))]}...")
                 if self.check_cuda():
@@ -262,8 +258,10 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
 
                 self.hook_pre_step_timer()  # hook for step timing
 
+                self.optimizer.zero_grad()
+
                 # ---------- forward pass ----------
-                with auto_cast(enable=self.cfg.fp16_train):
+                with autocast(enabled=self.cfg.fp16_train):
                     visual_data = self.model_mgr.encode_visual(batch)
                     text_data = self.model_mgr.encode_text(batch)
                     if self.cfg.train.loss_func == LossesConst.CONTRASTIVE:
@@ -278,19 +276,15 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
                 # ---------- backward pass ----------
                 if self.cfg.fp16_train:
                     # with fp16 amp
-                    grad_scaled = self.grad_scaler.scale(loss)
-                    grad_scaled.backward()
-                    self.grad_scaler.minimize(self.optimizer, grad_scaled)
-                    # self.grad_scaler.step(self.optimizer)
-                    # self.grad_scaler.update()
+                    self.grad_scaler.scale(loss).backward()
+                    self.grad_scaler.step(self.optimizer)
+                    self.grad_scaler.update()
                 else:
                     # with regular float32
                     loss.backward()
                     self.optimizer.step()
 
-                self.optimizer.clear_grad()
-
-                additional_log = f"L Contr: {contr_loss.numpy()[0]:.5f}, L CC: {cc_loss.numpy()[0]:.5f}"
+                additional_log = f"L Contr: {contr_loss:.5f}, L CC: {cc_loss:.5f}"
                 self.hook_post_backward_step_timer()  # hook for step timing
 
                 # post-step hook: gradient clipping, profile gpu, update metrics, count step, step LR scheduler, log
@@ -315,8 +309,8 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         # show end of training log message
         self.hook_post_train()
 
-    @paddle.no_grad()
-    def validate_epoch(self, data_loader:DataLoader, val_clips: bool = False, save_embs: bool = False) -> (
+    @th.no_grad()
+    def validate_epoch(self, data_loader: data.DataLoader, val_clips: bool = False, save_embs: bool = False) -> (
             Tuple[float, float, bool, Tuple[Dict[str, float], Optional[Dict[str, float]]]]):
         """
         Validate a single epoch.
@@ -337,9 +331,9 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         """
         self.hook_pre_val_epoch()  # pre val epoch hook: set models to val and start timers
         forward_time_total = 0
-        loss_total: paddle.Tensor = 0.
-        contr_loss_total: paddle.Tensor = 0.
-        cc_loss_total: paddle.Tensor = 0.
+        loss_total: th.Tensor = 0.
+        contr_loss_total: th.Tensor = 0.
+        cc_loss_total: th.Tensor = 0.
         data_collector = {}
 
         # decide what to collect
@@ -356,7 +350,6 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         num_steps = 0
         pbar = tqdm(total=len(data_loader), desc=f"Validate epoch {self.state.current_epoch}")
         for _step, batch in enumerate(data_loader):  # type: RetrievalDataBatchTuple
-            batch = RetrievalDataBatchTuple(*batch)
             # move data to cuda
             if self.check_cuda():
                 batch.to_cuda(non_blocking=self.cfg.cuda_non_blocking)
@@ -370,7 +363,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
             # ---------- forward pass ----------
             self.hook_pre_step_timer()  # hook for step timing
 
-            with auto_cast(enable=self.cfg.fp16_val):
+            with autocast(enabled=self.cfg.fp16_val):
                 visual_data = self.model_mgr.encode_visual(batch)
                 text_data = self.model_mgr.encode_text(batch)
                 if self.cfg.train.loss_func == LossesConst.CONTRASTIVE:
@@ -392,9 +385,9 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
                 emb = all_data.get(key)
                 # collect embeddings into list, on CPU otherwise the gpu runs OOM
                 if data_collector.get(key) is None:
-                    data_collector[key] = [emb.numpy()]
+                    data_collector[key] = [emb.cpu()]
                 else:
-                    data_collector[key] += [emb.numpy()]
+                    data_collector[key] += [emb.cpu()]
             pbar.update()
         pbar.close()
 
@@ -403,10 +396,10 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         # postprocess collected embeddings
         data_collector_norm = {}
         for key in collect_keys:
-            data_collector[key] = paddle.concat([paddle.to_tensor(data, dtype=paddle.float32) for data in data_collector[key]], axis=0)
+            data_collector[key] = th.cat(data_collector[key], dim=0).float()
             # data_collector_norm[key] = F.normalize(data_collector[key])
             data_collector_norm[key] = data_collector[key] / (data_collector[key] * data_collector[key]).sum(
-                axis=-1).sqrt().unsqueeze(-1)
+                dim=-1).sqrt().unsqueeze(-1)
 
         if save_embs:
             # save unnormalized embeddings
@@ -456,7 +449,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
 
         # print some more details about the retrieval (time, number of datapoints)
         self.logger.info(
-            f"Loss {loss_total.numpy()[0]:.5f} (Contr: {contr_loss_total.numpy()[0]:.5f}, CC: {cc_loss_total.numpy()[0]:.5f}) "
+            f"Loss {loss_total:.5f} (Contr: {contr_loss_total:.5f}, CC: {cc_loss_total:.5f}) "
             f"Retrieval: {str_vp}{str_cs}total {timer() - self.timer_val_epoch:.3f}s, "
             f"forward {forward_time_total:.3f}s")
 
@@ -483,7 +476,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
 
         return loss_total, val_score, is_best, ((res_v2p, res_p2v, sum_vp_at_1), clipsent_results)
 
-    def get_opt_state(self) -> Dict[str, Dict[str, paddle.ParamAttr]]:
+    def get_opt_state(self) -> Dict[str, Dict[str, nn.Parameter]]:
         """
         Return the current optimizer and scheduler state.
 
@@ -495,12 +488,12 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
             "lr_scheduler": self.lr_scheduler.state_dict()
         }
 
-    def set_opt_state(self, opt_state: Dict[str, Dict[str, paddle.ParamAttr]]) -> None:
+    def set_opt_state(self, opt_state: Dict[str, Dict[str, nn.Parameter]]) -> None:
         """
         Set the current optimizer and scheduler state from the given state.
 
         Args:
             opt_state: Dictionary of optimizer and scheduler state dict.
         """
-        self.optimizer.set_state_dict(opt_state["optimizer"])
-        self.lr_scheduler.set_state_dict(opt_state["lr_scheduler"])
+        self.optimizer.load_state_dict(opt_state["optimizer"])
+        self.lr_scheduler.load_state_dict(opt_state["lr_scheduler"])

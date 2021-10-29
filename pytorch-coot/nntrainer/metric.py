@@ -13,8 +13,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
-import paddle
-# from paddle.utils.tensorboard import SummaryWriter
+import torch as th
+from torch.utils.tensorboard import SummaryWriter
 
 from nntrainer import typext
 from nntrainer.experiment_organization import ExperimentFilesHandler
@@ -218,7 +218,7 @@ class MetricsWriter:
         self.storage_epoch: Dict[str, List[Tuple[int, float]]] = defaultdict(list)
 
         # tensorboard writer
-        # self.tensorb_writer = SummaryWriter(log_dir=self.exp.path_tensorb)
+        self.tensorb_writer = SummaryWriter(log_dir=self.exp.path_tensorb)
 
     def add_meter(self, meter_name: str, *, per_step: bool = False, use_value: bool = True, use_avg: bool = True,
                   reset_avg_each_epoch: bool = False, no_tensorboard: bool = False) -> None:
@@ -248,7 +248,7 @@ class MetricsWriter:
             meter_name: Meter to update.
             value: Value to update.
         """
-        if isinstance(value, paddle.Tensor):
+        if isinstance(value, th.Tensor):
             value = value.item()
         assert isinstance(value, (int, float)), (
             f"Got type {type(value).__name__} for metric {meter_name}.")
@@ -367,8 +367,8 @@ class MetricsWriter:
         """
         if not no_tensorboard:
             # write to tensorboard
-            # self.tensorb_writer.add_scalar(metric_name, metric_value, global_step=global_step)
-            pass
+            self.tensorb_writer.add_scalar(metric_name, metric_value, global_step=global_step)
+
         # write to metrics logger
         if per_step:
             self.storage_step[metric_name].append((global_step, metric_value))
