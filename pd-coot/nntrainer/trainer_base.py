@@ -116,7 +116,7 @@ class BaseTrainer:
                             "CUDA requested but not available! Use --no_cuda to run on CPU.")
                     if self.cfg.use_multi_gpu:
                         model = paddle.DataParallel(model)
-                    model = model.cuda()
+
             except RuntimeError as e:
                 raise RuntimeError(f"RuntimeError when putting model {type(model)} to cuda with DataParallel "
                                    f"{self.cfg.use_multi_gpu}: {model.__class__.__name__}") from e

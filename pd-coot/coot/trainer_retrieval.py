@@ -76,8 +76,6 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
 
         # contrastive loss
         self.loss_contr = ContrastiveLoss(self.cfg.train.contrastive_loss_config.margin, use_cuda=self.cfg.use_cuda)
-        if self.cfg.use_cuda:
-            self.loss_contr = self.loss_contr.cuda()
 
         # cycle consistency
         if self.cfg.train.loss_cycle_cons != 0:

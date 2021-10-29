@@ -123,10 +123,6 @@ class RetrievalModelManager(models.BaseModelManager):
             clip_emb_reshape = paddle.zeros((batch_size, max_clip_len, clip_feat_dim), dtype=paddle.float32)
             clip_emb_mask = paddle.ones((batch_size, max_clip_len), dtype=paddle.bool)
             clip_emb_lens = paddle.zeros((batch_size,), dtype=paddle.int64)
-            if self.cfg.use_cuda:
-                clip_emb_reshape = clip_emb_reshape.cuda()
-                clip_emb_mask = clip_emb_mask.cuda()
-                clip_emb_lens = clip_emb_lens.cuda()
             pointer = 0
             for batch_num, clip_len in enumerate(batch.clip_num):
                 clip_emb_reshape[batch_num, :int(clip_len), :] = clip_emb[pointer:int(pointer + clip_len), :]
@@ -179,10 +175,6 @@ class RetrievalModelManager(models.BaseModelManager):
             sent_emb_reshape = paddle.zeros((batch_size, max_sent_len, sent_feat_dim), dtype=paddle.float32)
             sent_emb_mask = paddle.ones((batch_size, max_sent_len), dtype=paddle.bool)
             sent_emb_lens = paddle.zeros((batch_size,), dtype=paddle.int64)
-            if self.cfg.use_cuda:
-                sent_emb_reshape = sent_emb_reshape.cuda()
-                sent_emb_mask = sent_emb_mask.cuda()
-                sent_emb_lens = sent_emb_lens.cuda()
             pointer = 0
             for batch_num, sent_len in enumerate(batch.sent_num):
                 sent_emb_reshape[batch_num, :int(sent_len), :] =\

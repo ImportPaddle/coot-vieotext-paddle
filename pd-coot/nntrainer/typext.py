@@ -254,7 +254,7 @@ class TypedNamedTuple(BaseModel):
         for name, value in self.dict().items():
             if isinstance(value, paddle.Tensor):
                 # update pydantic BaseModel with setattr
-                setattr(self, name, value.cuda(non_blocking=non_blocking))
+                setattr(self, name, value)
 
     class Config:
         # allow torch tensors etc.
