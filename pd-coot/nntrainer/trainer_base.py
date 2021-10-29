@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 from timeit import default_timer as timer
 from typing import Any, Dict, List, Optional, Tuple
+from initialaizers import clip_grad_norm_
 
 import paddle
 from paddle import nn, ParamAttr
@@ -529,7 +530,8 @@ class BaseTrainer:
             # get all parameters to clip
             _params, _param_names, params_flat = self.model_mgr.get_all_params()
             # clip using pytorch
-            total_norm = paddle.nn.ClipGradByNorm(params_flat, self.cfg.train.clip_gradient)
+            total_norm = clip_grad_norm_(params_flat, self.cfg.train.clip_gradient)
+            # total_norm = paddle.nn.ClipGradByNorm(params_flat, self.cfg.train.clip_gradient)
             if total_norm > self.cfg.train.clip_gradient:
                 # print log message if gradients where clipped
                 grad_clip_coef = self.cfg.train.clip_gradient / (total_norm + 1e-6)
