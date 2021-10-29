@@ -85,9 +85,9 @@ def make_optimizer(cfg: OptimizerConfig, params: Iterable[paddle.Tensor]) -> Opt
     # apply special lr / weight decay if given by the model.
     lr = cfg.lr
     wd = cfg.weight_decay
-    # for param_group in optimizer.param_groups:
-    #     param_group['lr'] = lr * param_group['lr_mult']
-    #     param_group['weight_decay'] = wd * param_group['decay_mult']
+    for param_group in optimizer._param_groups:
+        param_group['learning_rate'] = lr * param_group['lr_mult']
+        param_group['weight_decay'] = wd * param_group['decay_mult']
 
     return optimizer
 
