@@ -101,7 +101,7 @@ class SchedulerWarmupConst(typext.ConstantHolder):
 
 
 # ---------- Base Scheduler class ----------
-class LRScheduler(paddle.optimizer.lr.LRScheduler):
+class LRScheduler:
     """
     Base LR scheduler. Optimizer and this scheduler init must happen before checkpoint loading.
 
@@ -126,7 +126,6 @@ class LRScheduler(paddle.optimizer.lr.LRScheduler):
     def __init__(
             self, optimizer: Optimizer, base_lr: float, cfg: SchedulerConfig,
             num_epochs: int, train_loader_length: int, logger: logging.Logger):
-        super(LRScheduler, self).__init__()
         # attach optimizer
         assert isinstance(optimizer, Optimizer), f"{type(optimizer).__name__} is not an Optimizer"
         self.optimizer: Optimizer = optimizer
