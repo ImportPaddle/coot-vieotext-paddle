@@ -288,7 +288,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
                     loss.backward()
                     self.optimizer.step()
 
-                additional_log = f"L Contr: {contr_loss:.5f}, L CC: {cc_loss:.5f}"
+                additional_log = f"L Contr: {contr_loss.numpy()[0]:.5f}, L CC: {cc_loss.numpy()[0]:.5f}"
                 self.hook_post_backward_step_timer()  # hook for step timing
 
                 # post-step hook: gradient clipping, profile gpu, update metrics, count step, step LR scheduler, log
@@ -401,7 +401,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         # postprocess collected embeddings
         data_collector_norm = {}
         for key in collect_keys:
-            data_collector[key] = paddle.concat(data_collector[key], axis=0).astype(paddle.float32)
+            data_collector[key] = paddle.concat([paddle.to_tensor(data, dtype=paddle.float32) for data in data_collector[key]], axis=0)
             # data_collector_norm[key] = F.normalize(data_collector[key])
             data_collector_norm[key] = data_collector[key] / (data_collector[key] * data_collector[key]).sum(
                 axis=-1).sqrt().unsqueeze(-1)
@@ -454,7 +454,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
 
         # print some more details about the retrieval (time, number of datapoints)
         self.logger.info(
-            f"Loss {loss_total:.5f} (Contr: {contr_loss_total:.5f}, CC: {cc_loss_total:.5f}) "
+            f"Loss {loss_total.numpy()[0]:.5f} (Contr: {contr_loss_total.numpy()[0]:.5f}, CC: {cc_loss_total.numpy()[0]:.5f}) "
             f"Retrieval: {str_vp}{str_cs}total {timer() - self.timer_val_epoch:.3f}s, "
             f"forward {forward_time_total:.3f}s")
 

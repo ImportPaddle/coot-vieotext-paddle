@@ -543,7 +543,7 @@ class BaseTrainer:
             str_step = ("{:" + str(len(str(self.steps_per_epoch))) + "d}").format(epoch_step)
             print_string = "".join([
                 f"E{self.state.current_epoch}[{str_step}/{self.steps_per_epoch}] T {total_train_time:.3f}m ",
-                f"LR {lr:.1e} L {loss:.4f} ",
+                f"LR {lr:.1e} L {loss.numpy()[0]:.4f} ",
                 f"Grad {self.state.last_grad_norm:.3e} " if self.state.last_grad_norm != 0 else "",
                 f"{additional_log}" if additional_log is not None else ""])
             self.logger.info(print_string)

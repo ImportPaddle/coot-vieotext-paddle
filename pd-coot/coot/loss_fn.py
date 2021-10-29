@@ -159,8 +159,8 @@ class CycleConsistencyLoss(nn.Layer):
             CC clip loss, CC sentence loss
         """
         # Invert masks here s.t. padded sequence elements are 0
-        clip_mask = ~clip_mask
-        sent_mask = ~sent_mask
+        clip_mask = paddle.to_tensor(~clip_mask.numpy())
+        sent_mask = paddle.to_tensor(~sent_mask.numpy())
 
         # Get maximum of the sequence lengths
         clip_max_len = clip_mask.shape[1]
@@ -224,7 +224,7 @@ class CycleConsistencyLoss(nn.Layer):
 
         # build mask that is 0 whenever either source or target mask is 0
         # only source mask is NOT enough for soft NN (tested)
-        total_mask = source_mask.unsqueeze(2) & target_mask.unsqueeze(1)
+        total_mask = paddle.to_tensor(source_mask.unsqueeze(2).numpy() & target_mask.unsqueeze(1).numpy())
 
         return source_rep, target_rep, total_mask
 
@@ -262,7 +262,7 @@ class CycleConsistencyLoss(nn.Layer):
         # d holds distances (batch_size, source_num, target_num)
 
         # set masked distances to (almost) negative infinity
-        distance = paddle.where(~total_mask == 1,
+        distance = paddle.where(paddle.to_tensor(~total_mask.numpy() == 1),
                                 paddle.to_tensor(self.proximity_mask_val, dtype=paddle.float32),
                                 distance)
         # distance.masked_fill_(~total_mask, self.proximity_mask_val)
@@ -315,8 +315,8 @@ class CycleConsistencyLoss(nn.Layer):
             n_samp = paddle.minimum(emb_lens, self.num_samples_tensor)
             # draw n_samp random integers without replacement in range emb_lens
             total_loss = 0
-            for _batch, (c_loss, c_mask, c_nsamp) in enumerate(zip(l_seq, emb_mask, n_samp)):
-                idx = paddle.multinomial(c_mask.astype(paddle.float32), int(c_nsamp))
+            for _batch, (c_loss, c_mask, c_nsamp) in enumerate(zip(l_seq, emb_mask.numpy(), n_samp)):
+                idx = paddle.multinomial(paddle.to_tensor(c_mask).astype(paddle.float32), int(c_nsamp))
                 total_loss += c_loss[idx].mean()
             total_loss /= batch_size
         else:
@@ -370,7 +370,7 @@ class CycleConsistencyLoss(nn.Layer):
         # shape (batch, seq_len, seq_len)
 
         # mask values that exceed the sequence length
-        distance = paddle.where(~emb_mask_rep == 1, paddle.to_tensor(0.), distance)
+        distance = paddle.where(paddle.to_tensor(~emb_mask_rep.numpy() == 1), paddle.to_tensor(0.), distance)
         # distance.masked_fill_(~emb_mask_rep, 0)
 
         # diagonal of last 2 dims of this distance tensor contains distance
