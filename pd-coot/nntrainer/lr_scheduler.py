@@ -126,6 +126,7 @@ class LRScheduler(paddle.optimizer.lr.LRScheduler):
     def __init__(
             self, optimizer: Optimizer, base_lr: float, cfg: SchedulerConfig,
             num_epochs: int, train_loader_length: int, logger: logging.Logger):
+        super(LRScheduler, self).__init__()
         # attach optimizer
         assert isinstance(optimizer, Optimizer), f"{type(optimizer).__name__} is not an Optimizer"
         self.optimizer: Optimizer = optimizer
@@ -206,7 +207,7 @@ class LRScheduler(paddle.optimizer.lr.LRScheduler):
         """
         self.__dict__.update(state_dict)
 
-    def step(self) -> None:
+    def step(self, epoch=None) -> None:
         """
         Scheduler step, called once after every training step.
         """

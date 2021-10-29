@@ -322,10 +322,10 @@ class LearnableClsToken(nn.Layer):
         #       f"{self.cls_param.std():.9f}")
         batch, _seq_len, _d_model = features.shape
         # add cls token to features
-        features = paddle.concat([self.cls_param.unsqueeze(0).unsqueeze(0).repeat(batch, 1, 1), features], axis=1)
+        features = paddle.concat([self.cls_param.unsqueeze(0).unsqueeze(0).tile((batch, 1, 1)), features], axis=1)
         assert paddle.all(features[0, 0, :] == self.cls_param)
         # add Falses to beginning of the mask
-        zeros = (self.fixed_ones.unsqueeze(0).repeat(batch, 1) * 0).astype(paddle.bool) # shape (batch, 1)
+        zeros = (self.fixed_ones.unsqueeze(0).tile((batch, 1)) * 0).astype(paddle.bool) # shape (batch, 1)
         mask = paddle.concat([zeros, mask], axis=1)
         # increment all lengths by one. not inplace!
         # noinspection PyAugmentAssignment

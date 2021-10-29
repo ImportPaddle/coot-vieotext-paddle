@@ -262,8 +262,6 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
 
                 self.hook_pre_step_timer()  # hook for step timing
 
-                self.optimizer.clear_grad()
-
                 # ---------- forward pass ----------
                 with auto_cast(enable=self.cfg.fp16_train):
                     visual_data = self.model_mgr.encode_visual(batch)
@@ -280,13 +278,17 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
                 # ---------- backward pass ----------
                 if self.cfg.fp16_train:
                     # with fp16 amp
-                    self.grad_scaler.scale(loss).backward()
-                    self.grad_scaler.step(self.optimizer)
-                    self.grad_scaler.update()
+                    grad_scaled = self.grad_scaler.scale(loss)
+                    grad_scaled.backward()
+                    self.grad_scaler.minimize(self.optimizer, grad_scaled)
+                    # self.grad_scaler.step(self.optimizer)
+                    # self.grad_scaler.update()
                 else:
                     # with regular float32
                     loss.backward()
                     self.optimizer.step()
+
+                self.optimizer.clear_grad()
 
                 additional_log = f"L Contr: {contr_loss.numpy()[0]:.5f}, L CC: {cc_loss.numpy()[0]:.5f}"
                 self.hook_post_backward_step_timer()  # hook for step timing
