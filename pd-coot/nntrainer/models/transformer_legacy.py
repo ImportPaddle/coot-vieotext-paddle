@@ -205,8 +205,8 @@ class TransformerLegacy(nn.Layer):
             output_dim += self.cfg.crossatn.hidden_dim
         return output_dim
 
-    def forward(self, features: paddle.float64, mask: paddle.bool, lengths: paddle.int64,
-                # hidden_state: Optional[numpy.float64]):
+    def forward(self, features: paddle.float32, mask: paddle.bool, lengths: paddle.int64,
+                # hidden_state: Optional[numpy.float32]):
                 hidden_state: Optional[any]):
         """
         COOT forward pass. This is used in RetrievalModelManager to compute the embeddings.
@@ -263,7 +263,7 @@ class TransformerLegacy(nn.Layer):
             # context as query, features as key, value
             # output will be size 1 (add after pooling)
 
-            hidden_state = cast(paddle.float64, hidden_state.unsqueeze(1))
+            hidden_state = cast(paddle.float32, hidden_state.unsqueeze(1))
 
             # here we have to actually mask the query
             mask_ctx = mask

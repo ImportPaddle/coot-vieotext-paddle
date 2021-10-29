@@ -141,8 +141,8 @@ class CycleConsistencyLoss(nn.Layer):
         self.var_denom_eps = 1e-8
         self.var_log_eps = 1
 
-    def forward(self, clip_emb: paddle.float64, clip_mask: paddle.bool, clip_lens: paddle.int64,
-                sent_emb: paddle.float64, sent_mask: paddle.bool, sent_lens: paddle.int64):
+    def forward(self, clip_emb: paddle.float32, clip_mask: paddle.bool, clip_lens: paddle.int64,
+                sent_emb: paddle.float32, sent_mask: paddle.bool, sent_lens: paddle.int64):
         """
         Args:
             clip_emb: (batch_size, num_clips, feat_dim)

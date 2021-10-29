@@ -81,9 +81,9 @@ class PositionalEncodingSinCos(nn.Layer):
 
     def __init__(self, dim: int, dropout_prob: float = 0., max_len: int = 1000):
         super(PositionalEncodingSinCos, self).__init__()
-        pe = paddle.zeros([max_len, dim], dtype='float64')
-        position = paddle.arange(0, max_len).unsqueeze(1).astype('float64')
-        dimension = paddle.arange(0, dim).astype('float64')
+        pe = paddle.zeros([max_len, dim], dtype='float32')
+        position = paddle.arange(0, max_len).unsqueeze(1).astype('float32')
+        dimension = paddle.arange(0, dim).astype('float32')
         div_term = 10000 ** (2 * dimension / dim)
         # print(div_term.shape)
         pe[:, 0::2] = paddle.sin(position / div_term[0::2])

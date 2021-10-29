@@ -155,7 +155,7 @@ class GenPool(nn.Layer):
             strs.append(f"pool linear {p.shape}")
         return "\n".join(strs)
 
-    def forward(self, features: paddle.float64, mask: paddle.bool, _lengths: paddle.int64):
+    def forward(self, features: paddle.float32, mask: paddle.bool, _lengths: paddle.int64):
         """
         Args:
             features: Input features shape (batch_size, seq_len, feat_dim=

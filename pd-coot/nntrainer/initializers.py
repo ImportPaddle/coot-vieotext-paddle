@@ -6,7 +6,7 @@ import numpy as np
 from paddle import Tensor, concat, reshape
 import paddle
 
-from typext import INF as inf
+from nntrainer.typext import INF as inf
 from typing import Union, Iterable
 
 _tensor_or_tensors = Union[paddle.Tensor, Iterable[paddle.Tensor]]
