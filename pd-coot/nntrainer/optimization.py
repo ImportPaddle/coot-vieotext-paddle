@@ -8,7 +8,7 @@ from typing import Dict, Iterable
 import paddle
 from paddle.optimizer import Adam, AdamW
 from paddle.optimizer import Optimizer
-
+from paddle.optimizer.lr import ReduceOnPlateau
 from nntrainer import typext
 
 
@@ -54,13 +54,18 @@ def make_optimizer(cfg: OptimizerConfig, params: Iterable[paddle.Tensor]) -> Opt
         Normalization function class.
     """
     # print('params:', params, 'params len:', len(params))
+    lr_ROP = ReduceOnPlateau(cfg.lr, mode='min', factor=0.1, patience=cfg.rop_patience, threshold=1e-4,
+                             threshold_mode='rel', cooldown=cfg.rop_cooldown, min_lr=0,
+                             epsilon=1e-8, verbose=False)
 
     if cfg.name == OptimizerConst.ADAM:
-        optimizer: Optimizer = Adam(parameters=params, learning_rate=cfg.lr, beta1=cfg.momentum, beta2=cfg.adam_beta2, epsilon=cfg.adam_eps,
-                                    weight_decay=cfg.weight_decay)
-            # , amsgrad=cfg.adam_amsgrad
+        optimizer = Adam(parameters=params, learning_rate=lr_ROP, beta1=cfg.momentum,
+                         beta2=cfg.adam_beta2, epsilon=cfg.adam_eps,
+                         weight_decay=cfg.weight_decay)
+
     elif cfg.name == OptimizerConst.RADAM:
-        optimizer = AdamW(parameters=params, learning_rate=cfg.lr, beta1=cfg.momentum, beta2=cfg.adam_beta2, epsilon=cfg.adam_eps,
+        optimizer = AdamW(parameters=params, learning_rate=lr_ROP, beta1=cfg.momentum,
+                          beta2=cfg.adam_beta2, epsilon=cfg.adam_eps,
                           weight_decay=cfg.weight_decay)
         """
          def __init__(self,
@@ -76,9 +81,6 @@ def make_optimizer(cfg: OptimizerConfig, params: Iterable[paddle.Tensor]) -> Opt
                  multi_precision=False,
                  name=None):
         """
-        # optimizer = RAdam(params=params, lr=cfg.lr, betas=(cfg.momentum, cfg.adam_beta2), eps=cfg.adam_eps,
-        #                   weight_decay=cfg.weight_decay,
-        #                   degenerated_to_sgd=cfg.radam_degentosgd)
     else:
         raise NotImplementedError(f"Unknown optimizer {cfg.name}")
 
