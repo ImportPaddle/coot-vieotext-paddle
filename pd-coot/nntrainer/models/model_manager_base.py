@@ -149,7 +149,7 @@ class BaseModelManager:
                 decay_mult = 0.0
             params += [{
                 'params': value,
-                'weight_decay': decay_mult,
+                'decay_mult': decay_mult,
             }]
             params.append(value)
             param_names += [key]

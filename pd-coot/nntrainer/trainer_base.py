@@ -196,7 +196,7 @@ class BaseTrainer:
         # The following fields must be set by the inheriting trainer. In special cases (like multiple optimizers
         # with GANs), override methods get_opt_state and set_opt_state instead.
         self.optimizer: Optimizer = None
-        self.lr_scheduler: lr_scheduler.LRScheduler = None
+        self.lr_scheduler = None
 
         # setup timers and other stuff that does not need to be saved (temporary trainer state)
         self.timer_step: float = 0
@@ -438,7 +438,7 @@ class BaseTrainer:
         self.state.infos_val_steps.append(self.state.total_step)
         self.state.infos_val_is_good.append(is_best)
 
-    def hook_post_train_and_val_epoch(self, is_val: bool, has_improved: bool) -> None:
+    def hook_post_train_and_val_epoch(self, is_val: bool, has_improved: bool, loss) -> None:
         """
         Hook called after entire epoch (training + validation) is done.
 
@@ -451,7 +451,7 @@ class BaseTrainer:
 
         # step LR scheduler after end of epoch
         if self.lr_scheduler is not None:
-            self.lr_scheduler.step_epoch(is_val, has_improved)
+            self.lr_scheduler.step(loss.item())
 
         # log metrics
         self.metrics.update_meter(Metrics.TIME_TOTAL, self.state.time_total)
@@ -604,7 +604,7 @@ class BaseTrainer:
 
         # End of batch, step lr scheduler depending on flag
         if self.lr_scheduler is not None:
-            self.lr_scheduler.step()
+            self.lr_scheduler.step(loss.item())
 
     # ---------- Non-public methods ----------
 

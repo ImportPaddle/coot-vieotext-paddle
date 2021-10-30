@@ -109,16 +109,18 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         if not self.is_test:
             # create optimizer
             params, _param_names, _params_flat = self.model_mgr.get_all_params()
-            params_lst = []
-            for model_name, model in self.model_mgr.model_dict.items():
-                params_lst += model.parameters()
+            # params_lst = []
+            # for model_name, model in self.model_mgr.model_dict.items():
+            #     params_lst += model.parameters()
             # self.optimizer = optimization.make_optimizer(self.cfg.optimizer, params)
-            self.optimizer = optimization.make_optimizer(self.cfg.optimizer, [x for x in params_lst])
+            self.optimizer, self.lr_scheduler = optimization.make_optimizer(self.cfg.optimizer,
+                                                         self.cfg.lr_scheduler,
+                                                         params)
 
             # create lr scheduler
-            self.lr_scheduler = lr_scheduler.make_lr_scheduler(
-                self.optimizer, self.cfg.lr_scheduler, self.cfg.optimizer.lr, self.cfg.train.num_epochs,
-                self.train_loader_length, logger=self.logger)
+            # self.lr_scheduler = lr_scheduler.make_lr_scheduler(
+            #     self.optimizer, self.cfg.lr_scheduler, self.cfg.optimizer.lr, self.cfg.train.num_epochs,
+            #     self.train_loader_length, logger=self.logger)
 
         # post init hook for checkpoint loading
         self.hook_post_init()
@@ -295,7 +297,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
                 self.hook_post_backward_step_timer()  # hook for step timing
 
                 # post-step hook: gradient clipping, profile gpu, update metrics, count step, step LR scheduler, log
-                self.hook_post_step(step, loss, self.lr_scheduler.current_lr, additional_log=additional_log)
+                self.hook_post_step(step, loss, self.lr_scheduler.get_lr(), additional_log=additional_log)
 
             # ---------- validation ----------
             do_val = self.check_is_val_epoch()
@@ -311,7 +313,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
                 _val_loss, _val_score, is_best, _metrics = self.validate_epoch(val_loader, val_clips=val_clips)
 
             # post-epoch hook: scheduler, save checkpoint, time bookkeeping, feed tensorboard
-            self.hook_post_train_and_val_epoch(do_val, is_best)
+            self.hook_post_train_and_val_epoch(do_val, is_best, loss)
 
         # show end of training log message
         self.hook_post_train()

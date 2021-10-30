@@ -42,7 +42,9 @@ class OptimizerConfig(typext.ConfigClass):
         self.lr_decay_mult: bool = config.pop("lr_decay_mult")
 
 
-def make_optimizer(cfg: OptimizerConfig, params: Iterable[paddle.Tensor]) -> Optimizer:
+def make_optimizer(cfg_optim: OptimizerConfig,
+                   cfg_lr,
+                   params: Iterable[paddle.Tensor]) -> Optimizer:
     """
     Initializer optimizer given some configuration and parameters.
 
@@ -54,19 +56,19 @@ def make_optimizer(cfg: OptimizerConfig, params: Iterable[paddle.Tensor]) -> Opt
         Normalization function class.
     """
     # print('params:', params, 'params len:', len(params))
-    lr_ROP = ReduceOnPlateau(cfg.lr, mode='min', factor=0.1, patience=cfg.rop_patience, threshold=1e-4,
-                             threshold_mode='rel', cooldown=cfg.rop_cooldown, min_lr=0,
+    lr_ROP = ReduceOnPlateau(cfg_optim.lr, mode='min', factor=0.1, patience=cfg_lr.rop_patience, threshold=1e-4,
+                             threshold_mode='rel', cooldown=cfg_lr.rop_cooldown, min_lr=0,
                              epsilon=1e-8, verbose=False)
 
-    if cfg.name == OptimizerConst.ADAM:
-        optimizer = Adam(parameters=params, learning_rate=lr_ROP, beta1=cfg.momentum,
-                         beta2=cfg.adam_beta2, epsilon=cfg.adam_eps,
-                         weight_decay=cfg.weight_decay)
+    if cfg_optim.name == OptimizerConst.ADAM:
+        optimizer = Adam(parameters=params, learning_rate=lr_ROP, beta1=cfg_optim.momentum,
+                         beta2=cfg_optim.adam_beta2, epsilon=cfg_optim.adam_eps,
+                         weight_decay=cfg_optim.weight_decay)
 
-    elif cfg.name == OptimizerConst.RADAM:
-        optimizer = AdamW(parameters=params, learning_rate=lr_ROP, beta1=cfg.momentum,
-                          beta2=cfg.adam_beta2, epsilon=cfg.adam_eps,
-                          weight_decay=cfg.weight_decay)
+    elif cfg_optim.name == OptimizerConst.RADAM:
+        optimizer = AdamW(parameters=params, learning_rate=lr_ROP, beta1=cfg_optim.momentum,
+                          beta2=cfg_optim.adam_beta2, epsilon=cfg_optim.adam_eps,
+                          weight_decay=cfg_optim.weight_decay)
         """
          def __init__(self,
                  learning_rate=0.001,
@@ -89,9 +91,9 @@ def make_optimizer(cfg: OptimizerConfig, params: Iterable[paddle.Tensor]) -> Opt
     wd = cfg.weight_decay
     for param_group in optimizer._param_groups:
         param_group['learning_rate'] = lr
-        param_group['weight_decay'] = wd * param_group['weight_decay']
+        param_group['weight_decay'] = wd * param_group['decay_mult']
 
-    return optimizer
+    return optimizer, lr_ROP
 
 
 # ---------- Module implementation. ----------
