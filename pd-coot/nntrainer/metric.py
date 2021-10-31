@@ -379,7 +379,8 @@ class MetricsWriter:
         """
         Close all meters.
         """
-        self.tensorb_writer.close()
+        # self.tensorb_writer.close()
+        pass
 
 
 class MeterSettings:
