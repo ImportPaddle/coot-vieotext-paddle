@@ -4,11 +4,12 @@ Base class for the model manager that handles generic model-related tasks.
 This way, trainer and model can be separated in the code.
 """
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 import paddle
 from paddle import nn
+from paddle.fluid.core_avx import VarBase
 
 import nntrainer.trainer_configs
 
@@ -122,8 +123,7 @@ class BaseModelManager:
             # sep = "\n"
             # print(f"Loaded model: {model_name}params:\n{sep.join(name for name in state_dict.keys())}")
 
-    def get_params_opt_simple(self, model: nn.Layer) -> (
-            Tuple[List[Dict[str, Any]], List[str], List[paddle.Tensor]]):
+    def get_params_opt_simple(self, model: nn.Layer) -> Tuple[List[List[Union[VarBase, Dict[str, float]]]], list, list]:
         """
         Args:
             model: Model to get the parameters from.
@@ -147,11 +147,13 @@ class BaseModelManager:
             decay_mult = 1.0
             if self.cfg.optimizer.weight_decay_for_bias and 'bias' in key:
                 decay_mult = 0.0
+            if self.cfg.optimizer.weight_decay_for_bias and 'bias' in key:
+                decay_mult = 0.0
             params += [{
                 'params': value,
                 'decay_mult': decay_mult,
+                'lr_mult': 1.0
             }]
-            params.append(value)
             param_names += [key]
             params_flat += [value]
 

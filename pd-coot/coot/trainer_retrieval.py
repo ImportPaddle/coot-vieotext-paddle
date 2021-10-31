@@ -297,7 +297,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
                 self.hook_post_backward_step_timer()  # hook for step timing
 
                 # post-step hook: gradient clipping, profile gpu, update metrics, count step, step LR scheduler, log
-                self.hook_post_step(step, loss, self.lr_scheduler.get_lr(), additional_log=additional_log)
+                self.hook_post_step(step, loss, self.lr_scheduler.base_lr, additional_log=additional_log)
 
             # ---------- validation ----------
             do_val = self.check_is_val_epoch()
