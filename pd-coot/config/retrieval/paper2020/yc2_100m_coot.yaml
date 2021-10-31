@@ -3,7 +3,7 @@ random_seed: null
 config_type: "ret"
 # ---------- Training ----------
 train:
-    batch_size: 64
+    batch_size: 1
     num_epochs: 100
     loss_func: "contrastive"
     contrastive_loss_config:
@@ -54,7 +54,7 @@ dataset_train:
     words_noise: 0
     text_preprocessing: "bert_paper"
     max_datapoints: -1
-    shuffle: true
+    shuffle: false
     # video feature loading
     add_stop_frame: 2
     expand_segments: 0
@@ -136,7 +136,7 @@ net_text_global:
 # ---------- Optimizer ----------
 optimizer:
     name: "radam"
-    lr: 1e-3
+    lr: 1e-4
     weight_decay: 0
     weight_decay_for_bias: true
     momentum: 0.9

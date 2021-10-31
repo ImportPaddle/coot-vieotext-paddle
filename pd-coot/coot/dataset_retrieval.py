@@ -299,8 +299,11 @@ class RetrievalDataset(Dataset):
             c_num_frames = seg["num_frames"]
             if c_num_frames > self.cfg.max_frames:
                 c_num_frames = self.cfg.max_frames
-            c_frames = self.get_clip_frames_by_amount(key, i, c_num_frames)
-            c_frames = paddle.to_tensor(c_frames)
+            try:
+                c_frames = self.get_clip_frames_by_amount(key, i, c_num_frames)
+                c_frames = paddle.to_tensor(c_frames)
+            except:
+                a = 1
             if self.cfg.frames_noise != 0:
                 # add noise to frames if needed
                 clip_frames_noise = utils_paddle.get_truncnorm_tensor(c_frames.shape, std=self.cfg.frames_noise)
@@ -321,8 +324,11 @@ class RetrievalDataset(Dataset):
         # ---------- load text features ----------
         par_feat, sent_feat_len_list = self.text_feats[key]
         par_feat_len = int(par_feat.shape[0])
-        par_feat = paddle.to_tensor(par_feat, dtype=paddle.float32)
-
+        try:
+            par_feat = paddle.to_tensor(par_feat, dtype=paddle.float32)
+        except:
+            import traceback
+            traceback.print_exc()
         # split paragraph features into sentences
         sent_feat_list = []
         pointer = 0
@@ -509,6 +515,7 @@ def run_retrieval_dataset_test(train_set: RetrievalDataset, train_loader: DataLo
 
     # print one batch of data and exit
     for i, batch in enumerate(train_loader):  # type: RetrievalDataBatchTuple
+        print(paddle.in_dynamic_mode())
         batch = RetrievalDataBatchTuple(*batch)
         print("batch number:", i)
         for field, value in batch.dict().items():
@@ -517,4 +524,5 @@ def run_retrieval_dataset_test(train_set: RetrievalDataset, train_loader: DataLo
                 print(value.shape, value.dtype)
             else:
                 print(str(value)[:70], "..." if len(str(value)) > 70 else "")
-        break
+        print('')
+        # break

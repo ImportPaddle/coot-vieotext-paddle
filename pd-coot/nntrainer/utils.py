@@ -74,7 +74,7 @@ def create_logger(
     Returns:
     """
     # create logger, set level
-    logger = logging.getLogger(name)
+    logger = logging.getLogger('root')
     logger.setLevel(log_level)
 
     # remove old handlers to avoid duplicate messages
