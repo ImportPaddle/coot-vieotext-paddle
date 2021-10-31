@@ -240,7 +240,7 @@ def count_parameters(model, verbose=True):
     Count number of parameters in PyTorch model,
     """
     n_all = sum(p.numel() for p in model.parameters())
-    n_frozen = sum(p.numel() for p in model.parameters() if not p.requires_grad)
+    n_frozen = sum(p.numel() for p in model.parameters() if not p.trainable)
     if verbose:
         print(f"Parameters total: {n_all}, frozen: {n_frozen}")
     return n_all, n_frozen
