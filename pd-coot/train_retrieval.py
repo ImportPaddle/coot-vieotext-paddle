@@ -60,8 +60,8 @@ def main():
         os.system(cmd)
     train_set, val_set, train_loader, val_loader = create_retrieval_datasets_and_loaders(cfg, path_data)
 
-    if True:
-    # if args.test_dataset:
+    # if True:
+    if args.test_dataset:
         # run dataset test and exit
         print(paddle.in_dynamic_mode())
         run_retrieval_dataset_test(train_set, train_loader)
@@ -73,7 +73,10 @@ def main():
 
         # create coot models
         model_mgr = ModelManager(cfg)
-
+        for name, model in model_mgr.model_dict.items():
+            for params in model.parameters():
+                if not params.trainable:
+                    print('before training', params)
         # always load best epoch during validation
         load_best = args.load_best or args.validate
 
@@ -90,7 +93,7 @@ def main():
         else:
             # run training
             trainer.train_model(train_loader, val_loader)
-
+        print()
         # done with this round
         trainer.close()
         del model_mgr

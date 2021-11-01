@@ -525,4 +525,4 @@ def run_retrieval_dataset_test(train_set: RetrievalDataset, train_loader: DataLo
             else:
                 print(str(value)[:70], "..." if len(str(value)) > 70 else "")
         print('')
-        # break
+        break

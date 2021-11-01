@@ -56,12 +56,12 @@ def make_optimizer(cfg_optim: OptimizerConfig,
         Normalization function class.
     """
     # print('params:', params, 'params len:', len(params))
-    lr_ROP = ReduceOnPlateau(cfg_optim.lr, mode='min', factor=0.1, patience=cfg_lr.rop_patience, threshold=1e-4,
-                             threshold_mode='rel', cooldown=cfg_lr.rop_cooldown, min_lr=0,
-                             epsilon=1e-8, verbose=False)
+    lr_ROP = ReduceOnPlateau(cfg_optim.lr, mode='min', factor=.99, patience=cfg_lr.rop_patience, threshold=1e-4,
+                             threshold_mode='rel', cooldown=cfg_lr.rop_cooldown, min_lr=0.004,
+                             epsilon=1e-8, verbose=True)
 
-    # if True:
-    if cfg_optim.name == OptimizerConst.ADAM:
+    if True:
+    # if cfg_optim.name == OptimizerConst.ADAM:
         optimizer = Adam(parameters=params, learning_rate=lr_ROP, beta1=cfg_optim.momentum,
                          beta2=cfg_optim.adam_beta2, epsilon=cfg_optim.adam_eps,
                          weight_decay=cfg_optim.weight_decay)
@@ -74,9 +74,9 @@ def make_optimizer(cfg_optim: OptimizerConfig,
         raise NotImplementedError(f"Unknown optimizer {cfg_optim.name}")
 
     # apply special lr / weight decay if given by the model.
-    wd = cfg_optim.weight_decay
-    for param_group in optimizer._param_groups:
-        param_group['weight_decay'] = wd * param_group['decay_mult']
+    # wd = cfg_optim.weight_decay
+    # for param_group in optimizer._param_groups:
+    #     param_group['weight_decay'] = wd * param_group['decay_mult']
 
     return optimizer, lr_ROP
 

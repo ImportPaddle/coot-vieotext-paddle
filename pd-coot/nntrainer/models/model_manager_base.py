@@ -53,6 +53,7 @@ class BaseModelManager:
             params.extend(_params)
             param_names.extend(_param_names)
             params_flat.extend(_params_flat)
+        # print(params)
         return params, param_names, params_flat
 
     def set_all_models_train(self) -> None:

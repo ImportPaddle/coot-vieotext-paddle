@@ -108,14 +108,14 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         # skip optimizer if not training
         if not self.is_test:
             # create optimizer
-            params, _param_names, _params_flat = self.model_mgr.get_all_params()
-            # params_lst = []
-            # for model_name, model in self.model_mgr.model_dict.items():
-            #     params_lst += model.parameters()
+            # params, _param_names, _params_flat = self.model_mgr.get_all_params()
+            params_lst = []
+            for model_name, model in self.model_mgr.model_dict.items():
+                params_lst += model.parameters()
             # self.optimizer = optimization.make_optimizer(self.cfg.optimizer, params)
             self.optimizer, self.lr_scheduler = optimization.make_optimizer(self.cfg.optimizer,
                                                          self.cfg.lr_scheduler,
-                                                         params)
+                                                         params_lst)
 
             # create lr scheduler
             # self.lr_scheduler = lr_scheduler.make_lr_scheduler(
@@ -251,6 +251,10 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
 
         # ---------- Epoch Loop ----------
         for _epoch in range(self.state.current_epoch, self.cfg.train.num_epochs):
+            for name, model in self.model_mgr.model_dict.items():
+                for params in model.parameters():
+                    if not params.trainable:
+                        print('------------epoch:{} training------------'%_epoch, params)
             if self.check_early_stop():
                 break
             self.hook_pre_train_epoch()  # pre-epoch hook: set models to train, time book-keeping
@@ -279,26 +283,29 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
                 self.hook_post_forward_step_timer()  # hook for step timing
 
                 # ---------- backward pass ----------
-                if self.cfg.fp16_train:
+                # self.optimizer.clear_grad()
+                if True:
+                # if self.cfg.fp16_train:
                     # with fp16 amp
-                    grad_scaled = self.grad_scaler.scale(loss)
-                    grad_scaled.backward()
-                    self.grad_scaler.minimize(self.optimizer, grad_scaled)
+                    self.grad_scaler = paddle.amp.GradScaler(init_loss_scaling=1024)
+                    self.grad_scaled = self.grad_scaler.scale(loss)
+                    self.grad_scaled.backward()
+                    self.grad_scaler.minimize(self.optimizer, self.grad_scaled)
                     # self.grad_scaler.step(self.optimizer)
                     # self.grad_scaler.update()
                 else:
                     # with regular float32
                     loss.backward()
                     self.optimizer.step()
-
                 self.optimizer.clear_grad()
+
 
                 additional_log = f"L Contr: {contr_loss.numpy()[0]:.5f}, L CC: {cc_loss.numpy()[0]:.5f}"
                 self.hook_post_backward_step_timer()  # hook for step timing
 
                 # post-step hook: gradient clipping, profile gpu, update metrics, count step, step LR scheduler, log
                 self.hook_post_step(step, loss, self.lr_scheduler.base_lr, additional_log=additional_log)
-
+                print('--lr now :{} --'.format(self.optimizer.get_lr()))
             # ---------- validation ----------
             do_val = self.check_is_val_epoch()
 
