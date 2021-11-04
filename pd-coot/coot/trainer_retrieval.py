@@ -58,6 +58,8 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
             logger: Optional[logging.Logger] = None, print_graph: bool = False, reset: bool = False,
             load_best: bool = False, load_epoch: Optional[int] = None, load_model: Optional[str] = None,
             inference_only: bool = False):
+
+        a=cfg
         super().__init__(
             cfg, model_mgr, exp_group, exp_name, run_name, train_loader_length, ExperimentTypesConst.RETRIEVAL,
             log_dir=log_dir, log_level=log_level, logger=logger, print_graph=print_graph, reset=reset,
@@ -284,8 +286,8 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
 
                 # ---------- backward pass ----------
                 # self.optimizer.clear_grad()
-                if True:
-                # if self.cfg.fp16_train:
+                # if True:
+                if self.cfg.fp16_train:
                     # with fp16 amp
                     self.grad_scaler = paddle.amp.GradScaler(init_loss_scaling=1024)
                     self.grad_scaled = self.grad_scaler.scale(loss)

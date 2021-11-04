@@ -176,5 +176,5 @@ cudnn_benchmark: false
 #cudnn_benchmark: true
 cudnn_deterministic: false
 cuda_non_blocking: true
-fp16_train: False
-fp16_val:  False
+fp16_train: True
+fp16_val:  True
